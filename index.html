@@ -109,9 +109,9 @@
 </div>
 
 <script>
-    const apiKey = "AIzaSyAjARcxPPzrSs7v22qYFW2hLRpb6i2hqOg"; 
+    const apiKey = ""; 
     const DB_SEED_URL = "https://api.dicebear.com/7.x/avataaars/svg?seed=";
-    const MODEL_NAME = "gemini-2.5-flash-preview-09-2025"; 
+    const MODEL_ID = "gemini-2.5-flash-preview-09-2025"; 
 
     const KLASSE = {
         "Adriana S.": { seed: "Adriana", bio: "Arrogant, Moncler-Brille. Liebt Partys & Parallelklasse.", style: "Snobby, herablassend.", friends: ["Nila", "Eileen", "Helena", "Cedric", "Max", "Leif"], hates: ["William", "Tim", "Elisa", "Anna G.", "Anna P."] },
@@ -248,8 +248,8 @@
     }
 
     async function fetchGemini(prompt) {
-        // Correct endpoint construction for the proxy
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
+        // Use the absolute URL as specified in the environment rules
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${apiKey}`;
         
         const retryCount = 5;
         for (let i = 0; i < retryCount; i++) {
@@ -275,7 +275,7 @@
                 return JSON.parse(text);
             } catch (e) {
                 if (i === retryCount - 1) {
-                    console.error("Gemini Error:", e);
+                    // Fail silently after retries as per environment rules
                     return null;
                 }
                 const wait = Math.pow(2, i) * 1000;
