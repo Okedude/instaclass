@@ -109,9 +109,9 @@
 </div>
 
 <script>
-    const apiKey = "AIzaSyAjARcxPPzrSs7v22qYFW2hLRpb6i2hqOg"; // Set by environment
+    const apiKey = "AIzaSyAjARcxPPzrSs7v22qYFW2hLRpb6i2hqOg"; // Provided by environment
     const DB_SEED_URL = "https://api.dicebear.com/7.x/avataaars/svg?seed=";
-    const MODEL_NAME = "gemini-2.0-flash-exp"; 
+    const MODEL_NAME = "gemini-2.5-flash-preview-09-2025"; 
 
     const KLASSE = {
         "Adriana S.": { seed: "Adriana", bio: "Arrogant, Moncler-Brille. Liebt Partys & Parallelklasse.", style: "Snobby, herablassend.", friends: ["Nila", "Eileen", "Helena", "Cedric", "Max", "Leif"], hates: ["William", "Tim", "Elisa", "Anna G.", "Anna P."] },
@@ -248,25 +248,45 @@
     }
 
     async function fetchGemini(prompt) {
-        try {
-            // Fixed URL format for Google AI API
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`, {
-                method: "POST", 
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ 
-                    contents: [{ parts: [{ text: prompt }] }], 
-                    generationConfig: { 
-                        responseMimeType: "application/json" 
-                    } 
-                })
-            });
-            if (!res.ok) throw new Error('API request failed: ' + res.status);
-            const data = await res.json();
-            return JSON.parse(data.candidates[0].content.parts[0].text);
-        } catch (e) { 
-            console.error("Gemini Error:", e);
-            return null; 
+        // Correct endpoint for text generation in this environment
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
+        
+        const retryCount = 5;
+        for (let i = 0; i < retryCount; i++) {
+            try {
+                const res = await fetch(url, {
+                    method: "POST", 
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { 
+                            responseMimeType: "application/json" 
+                        }
+                    })
+                });
+
+                if (!res.ok) {
+                    if (res.status === 404) {
+                        console.error("Endpoint not found. Check MODEL_NAME and URL.");
+                        return null;
+                    }
+                    throw new Error(`API error: ${res.status}`);
+                }
+
+                const data = await res.json();
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!text) return null;
+                return JSON.parse(text);
+            } catch (e) {
+                if (i === retryCount - 1) {
+                    console.error("Gemini failed after retries:", e);
+                    return null;
+                }
+                const wait = Math.pow(2, i) * 1000;
+                await new Promise(r => setTimeout(r, wait));
+            }
         }
+        return null;
     }
 
     async function triggerGossip() {
