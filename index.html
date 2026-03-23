@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstaClass - Gossip & Image</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fff; color: #000; overflow: hidden; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .chat-bubble { max-width: 85%; padding: 10px 14px; border-radius: 18px; font-size: 0.9rem; line-height: 1.4; position: relative; }
+        .bubble-me { background-color: #0095f6; color: white; border-bottom-right-radius: 4px; }
+        .bubble-them { background-color: #efefef; color: black; border-bottom-left-radius: 4px; }
+        .online-indicator { width: 10px; height: 10px; border-radius: 50%; border: 2px solid white; position: absolute; bottom: 0; right: 0; }
+        .is-online { background-color: #4ade80; }
+        .is-offline { background-color: #94a3b8; }
+        .story-ring { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc23b0 75%, #bc1888 100%); padding: 2px; border-radius: 50%; }
+        .rel-bar-bg { height: 4px; width: 100%; background: #eee; border-radius: 2px; overflow: hidden; margin-top: 4px; }
+        .rel-bar-fill { height: 100%; transition: width 0.5s ease-in-out; }
+    </style>
+</head>
+<body>
+
+<div id="app-root" class="max-w-md mx-auto h-screen shadow-2xl relative flex flex-col border-x">
+    
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="fixed inset-0 z-[1000] bg-white flex flex-col items-center justify-center p-6 text-center">
+        <h1 class="text-4xl font-black italic tracking-tighter mb-4 text-[#0095f6]">InstaClass</h1>
+        <p class="text-xs font-bold text-gray-400 mb-8 uppercase tracking-widest">Wähle dein Profil</p>
+        <div class="w-full space-y-2 overflow-y-auto max-h-[70vh] px-4 hide-scroll border rounded-2xl p-2 bg-gray-50" id="login-list"></div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="border-b px-4 py-3 flex justify-between items-center z-50 sticky top-0 bg-white">
+        <div class="flex flex-col">
+            <h1 class="text-2xl font-black italic tracking-tighter cursor-pointer" onclick="location.reload()">InstaClass</h1>
+            <div id="user-reputation" class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter"></div>
+        </div>
+        <div class="flex items-center gap-4">
+            <span id="global-online-count" class="text-[10px] font-bold text-green-500 uppercase">● 0 Online</span>
+            <button onclick="openDMs()"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-10.6 8.38 8.38 0 0 1 3.9.9L21 3.5l-1.5 5.5Z"/></svg></button>
+        </div>
+    </header>
+
+    <!-- FEED -->
+    <main id="main-scroll" class="flex-1 overflow-y-auto hide-scroll pb-20">
+        <div class="flex gap-4 p-4 overflow-x-auto hide-scroll border-b border-gray-100">
+            <div id="stories-list" class="flex gap-4"></div>
+        </div>
+        <div id="feed-container" class="divide-y divide-gray-100"></div>
+    </main>
+
+    <!-- NAV -->
+    <nav class="fixed bottom-0 w-full max-w-md bg-white border-t flex justify-around py-4 z-50">
+        <button onclick="showHome()" class="p-2 text-gray-800"><svg width="26" height="26" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></button>
+        <button onclick="openPostModal()" class="p-2 text-gray-800"><svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></button>
+        <button onclick="logout()" class="w-8 h-8 rounded-full border overflow-hidden">
+            <img id="nav-avatar-img" src="" class="w-full h-full object-cover">
+        </button>
+    </nav>
+
+    <!-- DM VIEW -->
+    <div id="dm-view" class="hidden fixed inset-0 z-[100] bg-white flex flex-col max-w-md mx-auto border-x">
+        <header class="px-4 py-4 border-b flex items-center gap-4">
+            <button onclick="closeDMs()"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+            <h2 class="text-xl font-bold">Direktnachrichten</h2>
+        </header>
+        <div id="dm-list" class="flex-1 overflow-y-auto hide-scroll"></div>
+    </div>
+
+    <!-- CHAT VIEW -->
+    <div id="chat-view" class="hidden fixed inset-0 z-[200] bg-white flex flex-col max-w-md mx-auto border-x">
+        <header class="px-4 py-3 border-b flex items-center justify-between bg-white z-10 shadow-sm">
+            <div class="flex items-center gap-3 overflow-hidden flex-1">
+                <button onclick="closeChat()"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+                <div class="relative">
+                    <img id="chat-header-img" src="" class="w-9 h-9 rounded-full border object-cover">
+                    <div id="chat-header-online" class="online-indicator is-offline"></div>
+                </div>
+                <div class="truncate flex-1">
+                    <div class="flex items-center justify-between pr-2">
+                        <h3 id="chat-header-name" class="font-bold text-sm truncate">Name</h3>
+                        <span id="chat-rel-val" class="text-[9px] font-black text-gray-400">50%</span>
+                    </div>
+                    <div class="rel-bar-bg"><div id="chat-rel-bar" class="rel-bar-fill bg-blue-500" style="width: 50%;"></div></div>
+                </div>
+            </div>
+        </header>
+        <div id="chat-msgs" class="flex-1 p-4 overflow-y-auto flex flex-col gap-3 bg-gray-50/50"></div>
+        <div id="typing-indicator" class="hidden px-6 py-2 text-[10px] italic text-gray-400 font-bold uppercase tracking-wider">Tippt...</div>
+        <div id="chat-input-area" class="p-4 border-t flex gap-2 bg-white">
+            <input type="text" id="chat-input" placeholder="Nachricht an die Klasse..." class="flex-1 bg-gray-100 p-3 rounded-2xl outline-none text-sm">
+            <button onclick="sendMessage()" class="text-[#0095f6] font-bold px-2">Senden</button>
+        </div>
+    </div>
+
+    <!-- POST MODAL -->
+    <div id="post-modal" class="hidden fixed inset-0 z-[500] bg-black/60 flex items-end">
+        <div class="w-full bg-white rounded-t-[24px] p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold">Neuer Post</h3>
+                <button onclick="closePostModal()"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+            </div>
+            <textarea id="post-input" placeholder="Teile Gossip oder ein Update..." class="w-full h-24 p-4 bg-gray-50 rounded-xl border text-sm mb-4"></textarea>
+            <button onclick="createNewPost()" class="w-full bg-[#0095f6] text-white py-4 rounded-xl font-bold">Veröffentlichen</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // API KEY INTEGRATED
+    const apiKey = "AIzaSyAjARcxPPzrSs7v22qYFW2hLRpb6i2hqOg";
+    const DB_SEED_URL = "https://api.dicebear.com/7.x/avataaars/svg?seed=";
+
+    const KLASSE = {
+        "Adriana S.": { seed: "Adriana", bio: "Arrogant, Moncler-Brille. Liebt Partys & Parallelklasse.", style: "Snobby, herablassend.", friends: ["Nila", "Eileen", "Helena", "Cedric", "Max", "Leif"], hates: ["William", "Tim", "Elisa", "Anna G.", "Anna P."] },
+        "Anna G.": { seed: "AnnaG", bio: "Trinkt Alkohol, Vergangenheit mit Konsum. Sehr offen, lacht oft, schlechte Noten.", style: "Direkt, offen, sympathisch.", friends: ["Anna P.", "Tim", "Leif", "Max", "Jacob"], hates: ["Adriana S.", "William", "Cedric"] },
+        "Anna P.": { seed: "AnnaP", bio: "Beste Freundin von Anna G. Wohnt in Küsnacht, spielt Tennis, 15 Jahre alt. Grosse Augen.", style: "Sympathisch, offen, direkt.", friends: ["Anna G.", "Tim", "Alex Z.", "Lino", "Jacob", "Max", "Leif", "Nick", "Sämi", "Valerie"], hates: [] },
+        "Cedric": { seed: "Cedric", bio: "Liebt GCZ. Trägt grüne Adidas Jacke & beige Schuhe. Steht auf Emmanuel Schmucki.", style: "Defensiv, keine echten Freunde in der Klasse.", friends: ["Luc", "Sean", "Adriana S.", "Eileen", "Helena", "Nila", "Tim-Oliver"], hates: ["Leif", "Tim"] },
+        "Eileen": { seed: "Eileen", bio: "Küsnacht. Austausch Costa-Rica. Blonde Haare, 16, humorvoll.", style: "Humorvoll, lacht viel.", friends: ["Luc", "Sean", "Cedric", "Adriana S.", "Nila", "Helena", "Mila", "Paulina"], hates: ["William"] },
+        "Elin": { seed: "Elin", bio: "Vater hat Apotheke, 2 Hunde (Clooney). Wohnt in Zollikon, 175cm. Spielt Volleyball.", style: "Gepflegt, ruhig.", friends: ["Zofia", "Elisa", "Emma", "Tim", "William", "Jacob", "Lily-Marie", "Julia"], hates: ["Adriana S."] },
+        "Elisa": { seed: "Elisa", bio: "Romandie-Austausch. Spricht Französisch, weiss viel Tratsch. Wohnt in Thalwil.", style: "Nett, redet viel, Tratschtante.", friends: ["Tim", "William", "Elin", "Zofia", "Emma", "Jacob", "Lily-Marie", "Julia"], hates: ["Cedric", "Adriana S.", "William"] },
+        "Emma": { seed: "Emma", bio: "Aus Schweden, FCZ-Fan. Freund: Max. War in Hastings. 177cm.", style: "Direkt, abenteuerlustig, teils verschlossen.", friends: ["Tim", "William", "Elin", "Zofia", "Lily-Marie", "Anna P.", "Anna G.", "Julia"], hates: ["Cedric"] },
+        "Helena": { seed: "Helena", bio: "Austausch USA. Familie gehört Tina Turner Haus (850 Mio). Lipsync Tiktok.", style: "Arrogant, reich, teils nett.", friends: ["Adriana S.", "Nila", "Eileen", "Mila", "Paulina", "Cedric", "Luc", "Sean"], hates: ["William", "Lily-Marie"] },
+        "Jacob": { seed: "Jacob", bio: "Introvertierter Deutscher, Bisexuell. Trägt Nikin. Gewerberaum für Kinoabende.", style: "Nett wenn man ihn kennt, introvertiert.", friends: ["William", "Tim-Oliver", "Tim", "Leif", "Anna G.", "Anna P."], hates: ["Max"] },
+        "Jara": { seed: "Jara", bio: "Austausch Australien. Mag Roblox & Pferde. Italienischprofil.", style: "Introvertiert, in der Gruppe extrovertiert.", friends: ["Anna G.", "Anna P.", "Leif", "Tim", "Jacob"], hates: ["Cedric", "Adriana S."] },
+        "Julia": { seed: "Julia", bio: "Meilen, 15. Mag Pferde & Ballett. Strenge Mutter.", style: "Introvertiert, ruhig.", friends: ["Elisa", "Elin", "Emma", "Zofia", "Lily-Marie", "William", "Tim"], hates: [] },
+        "Leif": { seed: "Leif", bio: "Fluffy Hair (Sea salt). Musik & Anime. Kleidung aus Tschechien. Egozentrisch.", style: "Egozentrisch, herablassend, arrogant.", friends: ["Tim", "Max", "Jacob", "Anna P.", "Anna G.", "Cedric", "Elias"], hates: ["Cedric", "Adriana S."] },
+        "Lily-Marie": { seed: "LilyMarie", bio: "Österreicherin, Streberin. Skifahren in St. Anton. Sehr hilfsbereit.", style: "Nett, hilfsbereit, teils arrogant wirkend.", friends: ["Zofia", "Emma", "Elin", "Elisa", "Tim", "William", "Julia"], hates: [] },
+        "Luc": { seed: "Luc", bio: "Austausch USA. Blackpillmogger. Fühlt sich als Macho.", style: "Macho, extrovertiert, teils nett.", friends: ["Sean", "Adriana S.", "Eileen", "Nila", "Helena", "Cedric"], hates: [] },
+        "Max": { seed: "Max", bio: "16, Freund von Emma. Trägt Alpha Industries. Geht viel ins Gym.", style: "Gym-Physique, teils arrogant.", friends: ["Leif", "Tim", "Anna G.", "Anna P.", "Emma", "William"], hates: ["Cedric"] },
+        "Nila": { seed: "Nila", bio: "Höflich, blonde Haare. Hasst Geschichte. Trinkt wenig an Partys.", style: "Höflich, zuvorkommend, selten frech.", friends: ["Adriana S.", "Eileen", "Helena", "Cedric", "Luc", "Sean"], hates: [] },
+        "Sean": { seed: "Sean", bio: "Austausch Neuseeland. Trinkt gerne Bier. Kecke Art.", style: "Extrovertiert, nett, keck.", friends: ["Luc", "Cedric", "Nila", "Adriana S.", "Paulina", "Mila", "Theo"], hates: [] },
+        "Tim-Oliver": { seed: "Toli", bio: "Esslingen. Hat Haus renoviert. Extrem introvertiert, lacht über alles.", style: "Asozial wirkend, eigentlich nett.", friends: ["Leif", "Jacob", "Tim"], hates: [] },
+        "William": { seed: "William", bio: "Mongolei, sehr kleinwüchsig aber humorvoll. Streber, sehr respektvoll.", style: "Offen, respektvoll, umsichtig.", friends: ["Zofia", "Julia", "Lily-Marie", "Emma", "Elisa", "Elin", "Tim", "Leif", "Jacob", "Max", "Cedric"], hates: ["Adriana S."] },
+        "Zofia": { seed: "Zofia", bio: "Spanischprofil, Streber-Tendenzen. Beliebt bei Lehrern.", style: "Nett, offen, ambrivertiert.", friends: ["Julia", "Lily-Marie", "Emma", "Elisa", "Elin", "Tim", "William"], hates: [] },
+        "Ellison": { seed: "Ellison", bio: "USA, Politisch interessiert. Kann fies & fake sein. Schwer zu knacken.", style: "Fake, fies, diskussionsfreudig.", friends: ["Adriana S.", "Eileen", "Nila", "Helena", "Cedric", "Luc", "Sean"], hates: ["William"] },
+        "Tim": { seed: "TimItalo", bio: "Hypersozialer Italiener. Hasst falsche Pasta. Läster-König.", style: "Starke Meinung, lästert viel.", friends: ["William", "Leif", "Anna G.", "Anna P.", "Jacob", "Max", "Tim-Oliver", "Elisa", "Lily-Marie", "Zofia", "Emma", "Julia", "Eileen", "Nila", "Jara"], hates: ["Cedric", "Adriana S."] }
+    };
+
+    let globalState = JSON.parse(localStorage.getItem('instaClass_v7')) || {
+        feed: [],
+        history: {},
+        reputation: {}, 
+        relationships: {}, 
+        onlineStatus: {}
+    };
+
+    let currentUser = null;
+    let activeChat = null;
+
+    function save() { localStorage.setItem('instaClass_v7', JSON.stringify(globalState)); }
+
+    function getRep(name) { return globalState.reputation[name] || 50; }
+    
+    function calculateInitialRel(userA, userB) {
+        let score = 50;
+        const charA = KLASSE[userA];
+        const charB = KLASSE[userB];
+        if (charA.friends.includes(userB) || charA.friends.includes(userB.split(' ')[0])) score += 30;
+        if (charB.friends.includes(userA) || charB.friends.includes(userA.split(' ')[0])) score += 30;
+        if (charA.hates.includes(userB) || charA.hates.includes(userB.split(' ')[0])) score -= 40;
+        if (charB.hates.includes(userA) || charB.hates.includes(userA.split(' ')[0])) score -= 40;
+        return Math.max(0, Math.min(100, score));
+    }
+
+    function getRel(name) { 
+        if (!currentUser || !name) return 50;
+        const key = [currentUser, name].sort().join('_');
+        if (globalState.relationships[key] === undefined) {
+            globalState.relationships[key] = calculateInitialRel(currentUser, name);
+            save();
+        }
+        return globalState.relationships[key]; 
+    }
+
+    function setRel(name, delta) {
+        if (!currentUser || !name) return;
+        const key = [currentUser, name].sort().join('_');
+        const oldVal = getRel(name);
+        globalState.relationships[key] = Math.max(0, Math.min(100, oldVal + delta));
+        save();
+        if (activeChat === name) updateChatHeaderRel();
+    }
+
+    function setRep(name, delta) { 
+        globalState.reputation[name] = Math.max(0, Math.min(100, getRep(name) + delta));
+        save();
+        if (currentUser === name) updateHeader();
+    }
+
+    function updateHeader() {
+        if (!currentUser) return;
+        const rep = getRep(currentUser);
+        let rank = "Normaler Schüler";
+        let color = "text-gray-400";
+        if (rep > 85) { rank = "Klassen-Idol"; color = "text-yellow-500"; }
+        else if (rep > 65) { rank = "Beliebt"; color = "text-green-500"; }
+        else if (rep < 25) { rank = "Target"; color = "text-red-500 font-black uppercase"; }
+        const el = document.getElementById('user-reputation');
+        if (el) el.innerHTML = `<span class="${color}">★ ${rank} (${rep}%)</span>`;
+    }
+
+    function initLogin() {
+        const list = document.getElementById('login-list');
+        if (!list) return;
+        list.innerHTML = "";
+        Object.keys(KLASSE).sort().forEach(name => {
+            const btn = document.createElement('button');
+            btn.className = "w-full flex items-center justify-between p-4 bg-white hover:bg-gray-100 rounded-xl transition border active:scale-95";
+            btn.onclick = () => login(name);
+            btn.innerHTML = `
+                <div class="flex items-center gap-4 text-left">
+                    <img src="${DB_SEED_URL + KLASSE[name].seed}" class="w-12 h-12 rounded-full border shadow-sm">
+                    <span class="font-bold text-sm">${name}</span>
+                </div>
+                <div class="flex flex-col items-end">
+                    <span class="text-[9px] font-black text-blue-500 uppercase tracking-tighter">${getRep(name)}% Image</span>
+                </div>
+            `;
+            list.appendChild(btn);
+        });
+        Object.keys(KLASSE).forEach(name => {
+            if (globalState.onlineStatus[name] === undefined) globalState.onlineStatus[name] = Math.random() > 0.4;
+        });
+        updateGlobalOnlineCount();
+    }
+
+    function login(name) {
+        currentUser = name;
+        const navImg = document.getElementById('nav-avatar-img');
+        if (navImg) navImg.src = DB_SEED_URL + KLASSE[name].seed;
+        document.getElementById('login-screen').classList.add('hidden');
+        updateHeader(); renderStories(); triggerGossip(); renderFeed();
+    }
+
+    function logout() {
+        currentUser = null;
+        document.getElementById('login-screen').classList.remove('hidden');
+        initLogin();
+    }
+
+    function updateGlobalOnlineCount() {
+        const count = Object.values(globalState.onlineStatus).filter(v => v).length;
+        document.getElementById('global-online-count').innerText = `● ${count} Online`;
+    }
+
+    async function fetchGemini(prompt) {
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } })
+            });
+            const data = await res.json();
+            return JSON.parse(data.candidates[0].content.parts[0].text);
+        } catch (e) { return null; }
+    }
+
+    async function triggerGossip() {
+        if (Math.random() > 0.4) return;
+        const users = Object.keys(KLASSE);
+        const randomUser = users[Math.floor(Math.random() * users.length)];
+        if (randomUser === currentUser) return;
+        const prompt = `Gossip-Post (max 15 Wörter) von ${randomUser}. Nutze Fakten: Adriana/Moncler, Cedric/GCZ, Leif/Tschechien-Kleidung, Max/Gym. JSON: {"target": "Name", "text": "...", "impact": -5 bis 5}`;
+        const data = await fetchGemini(prompt);
+        if (data) {
+            globalState.feed.push({ id: Date.now(), user: randomUser, text: data.text, type: 'gossip' });
+            if (data.target && KLASSE[data.target]) setRep(data.target, data.impact);
+            save(); renderFeed();
+        }
+    }
+
+    function openChat(name) {
+        activeChat = name;
+        document.getElementById('chat-view').classList.remove('hidden');
+        document.getElementById('chat-header-name').innerText = name;
+        document.getElementById('chat-header-img').src = DB_SEED_URL + KLASSE[name].seed;
+        document.getElementById('chat-header-online').className = `online-indicator ${globalState.onlineStatus[name] ? 'is-online' : 'is-offline'}`;
+        updateChatHeaderRel(); renderMessages();
+    }
+
+    function updateChatHeaderRel() {
+        if (!activeChat) return;
+        const val = getRel(activeChat);
+        document.getElementById('chat-rel-val').innerText = val + "%";
+        const relBarEl = document.getElementById('chat-rel-bar');
+        relBarEl.style.width = val + "%";
+        relBarEl.className = val > 75 ? "rel-bar-fill bg-green-500" : (val < 30 ? "rel-bar-fill bg-red-500" : "rel-bar-fill bg-blue-500");
+    }
+
+    function renderMessages() {
+        if (!activeChat) return;
+        const key = [currentUser, activeChat].sort().join('_');
+        const msgs = globalState.history[key] || [];
+        const cont = document.getElementById('chat-msgs');
+        cont.innerHTML = msgs.map(m => `
+            <div class="flex flex-col ${m.sender === currentUser ? 'items-end' : 'items-start'}">
+                <div class="chat-bubble ${m.sender === currentUser ? 'bubble-me' : 'bubble-them'}">${m.text}</div>
+            </div>
+        `).join('');
+        cont.scrollTop = cont.scrollHeight;
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('chat-input');
+        const text = input.value.trim();
+        if (!text || !activeChat) return;
+        const key = [currentUser, activeChat].sort().join('_');
+        if (!globalState.history[key]) globalState.history[key] = [];
+        globalState.history[key].push({ sender: currentUser, text, time: Date.now() });
+        input.value = ""; renderMessages();
+        document.getElementById('typing-indicator').classList.remove('hidden');
+        const prompt = `Du bist ${activeChat}. Chat mit ${currentUser}. Stil: ${KLASSE[activeChat].style}. Bio: ${KLASSE[activeChat].bio}. Jugend-Slang. Beziehung: ${getRel(activeChat)}%. Nachricht: "${text}". JSON: {"reply": "...", "relChange": -5 bis +5, "repChange": -2 bis +2}`;
+        const data = await fetchGemini(prompt);
+        if (data) {
+            setTimeout(() => {
+                globalState.history[key].push({ sender: activeChat, text: data.reply, time: Date.now() });
+                if (data.relChange) setRel(activeChat, data.relChange);
+                if (data.repChange) setRep(currentUser, data.repChange);
+                save(); renderMessages();
+                document.getElementById('typing-indicator').classList.add('hidden');
+            }, 1000 + Math.random() * 1500);
+        }
+    }
+
+    function renderStories() {
+        const list = document.getElementById('stories-list');
+        list.innerHTML = Object.keys(KLASSE).filter(k => k !== currentUser).map(k => `
+            <div class="flex flex-col items-center gap-1 flex-shrink-0 cursor-pointer" onclick="openChat('${k}')">
+                <div class="story-ring relative">
+                    <div class="bg-white p-0.5 rounded-full"><img src="${DB_SEED_URL + KLASSE[k].seed}" class="w-10 h-10 rounded-full border"></div>
+                </div>
+                <span class="text-[8px] font-bold">${k.split(' ')[0]}</span>
+            </div>
+        `).join('');
+    }
+
+    function renderFeed() {
+        const cont = document.getElementById('feed-container');
+        cont.innerHTML = globalState.feed.slice().reverse().map(p => `
+            <div class="p-4 border-b ${p.type === 'gossip' ? 'bg-orange-50/50' : ''}">
+                <div class="flex items-center gap-2 mb-2">
+                    <img src="${DB_SEED_URL + KLASSE[p.user]?.seed}" class="w-6 h-6 rounded-full border">
+                    <span class="font-bold text-xs">${p.user}</span>
+                    ${p.type === 'gossip' ? '<span class="text-[9px] bg-orange-400 text-white px-1.5 py-0.5 rounded-full font-black uppercase">News</span>' : ''}
+                </div>
+                <p class="text-sm leading-snug">${p.text}</p>
+            </div>
+        `).join('') || '<p class="p-8 text-center text-gray-400 text-xs uppercase font-bold italic tracking-wider">Lade News...</p>';
+    }
+
+    function openDMs() {
+        document.getElementById('dm-view').classList.remove('hidden');
+        document.getElementById('dm-list').innerHTML = Object.keys(KLASSE).filter(k => k !== currentUser).map(k => {
+            const rel = getRel(k);
+            return `<div class="p-4 border-b flex items-center gap-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100" onclick="openChat('${k}')">
+                <img src="${DB_SEED_URL + KLASSE[k].seed}" class="w-12 h-12 rounded-full border shadow-sm">
+                <div class="flex-1 truncate">
+                    <div class="flex justify-between items-center mb-1"><span class="font-bold text-sm">${k}</span><span class="text-[9px] font-black text-blue-500 uppercase">${rel}% Rel</span></div>
+                    <div class="rel-bar-bg"><div class="rel-bar-fill bg-blue-400" style="width: ${rel}%;"></div></div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function closeDMs() { document.getElementById('dm-view').classList.add('hidden'); }
+    function closeChat() { document.getElementById('chat-view').classList.add('hidden'); activeChat = null; }
+    function showHome() { closeChat(); closeDMs(); }
+    function openPostModal() { document.getElementById('post-modal').classList.remove('hidden'); }
+    function closePostModal() { document.getElementById('post-modal').classList.add('hidden'); }
+    
+    async function createNewPost() {
+        const input = document.getElementById('post-input');
+        const text = input.value.trim();
+        if (!text) return;
+        const prompt = `Post von ${currentUser}: "${text}". Wie beeinflusst das sein Image? JSON: {"repDelta": -8 bis +8, "comment": "kurzer Kommentar eines Mitschülers", "author": "Name"}`;
+        const data = await fetchGemini(prompt);
+        globalState.feed.push({ id: Date.now(), user: currentUser, text });
+        if (data?.repDelta) setRep(currentUser, data.repDelta);
+        save(); renderFeed(); closePostModal(); input.value = "";
+        if (data?.comment) {
+            setTimeout(() => { globalState.feed.push({ id: Date.now(), user: data.author, text: data.comment }); save(); renderFeed(); }, 1200);
+        }
+    }
+    window.onload = initLogin;
+</script>
+</body>
+</html>
