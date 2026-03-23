@@ -109,9 +109,10 @@
 </div>
 
 <script>
-    const apiKey = "AIzaSyAjARcxPPzrSs7v22qYFW2hLRpb6i2hqOg"; // Provided by environment
+    const apiKey = ""; // Provided by environment
     const DB_SEED_URL = "https://api.dicebear.com/7.x/avataaars/svg?seed=";
-    const MODEL_NAME = "gemini-2.5-flash-preview-09-2025"; 
+    // Updated to a more standard model name to avoid 404 errors
+    const MODEL_NAME = "gemini-1.5-flash"; 
 
     const KLASSE = {
         "Adriana S.": { seed: "Adriana", bio: "Arrogant, Moncler-Brille. Liebt Partys & Parallelklasse.", style: "Snobby, herablassend.", friends: ["Nila", "Eileen", "Helena", "Cedric", "Max", "Leif"], hates: ["William", "Tim", "Elisa", "Anna G.", "Anna P."] },
@@ -248,7 +249,6 @@
     }
 
     async function fetchGemini(prompt) {
-        // Corrected URL structure: :generateContent must come before the API key query param
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
         
         const retryCount = 5;
