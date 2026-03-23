@@ -248,7 +248,7 @@
     }
 
     async function fetchGemini(prompt) {
-        // Correct endpoint for text generation in this environment
+        // Corrected URL structure: :generateContent must come before the API key query param
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
         
         const retryCount = 5;
@@ -266,10 +266,6 @@
                 });
 
                 if (!res.ok) {
-                    if (res.status === 404) {
-                        console.error("Endpoint not found. Check MODEL_NAME and URL.");
-                        return null;
-                    }
                     throw new Error(`API error: ${res.status}`);
                 }
 
@@ -279,7 +275,7 @@
                 return JSON.parse(text);
             } catch (e) {
                 if (i === retryCount - 1) {
-                    console.error("Gemini failed after retries:", e);
+                    console.error("Gemini Error:", e);
                     return null;
                 }
                 const wait = Math.pow(2, i) * 1000;
