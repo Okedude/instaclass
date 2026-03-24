@@ -111,7 +111,8 @@
 <script>
     // Config for GitHub Pages Deployment
     const apiKey = "AIzaSyAjARcxPPzrSs7v22qYFW2hLRpb6i2hqOg"; 
-    const MODEL_ID = "gemini-2.5-flash-preview-09-2025";
+    // FIX: Changed restricted preview model name to standard stable version
+    const MODEL_ID = "gemini-1.5-flash"; 
     const DB_SEED_URL = "https://api.dicebear.com/7.x/avataaars/svg?seed=";
 
     const KLASSE = {
@@ -154,7 +155,6 @@
     function save() { localStorage.setItem('instaClass_v7', JSON.stringify(globalState)); }
 
     async function fetchGemini(prompt) {
-        // Updated URL construction
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${apiKey}`;
         const delays = [1000, 2000, 4000, 8000, 16000];
         
