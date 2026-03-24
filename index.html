@@ -109,8 +109,9 @@
 </div>
 
 <script>
-    const apiKey = ""; 
-    const MODEL_ID = "gemini-2.5-flash-preview-09-2025"; 
+    // API KEY FOR GITHUB PAGES
+    const apiKey = "AIzaSyAjARcxPPzrSs7v22qYFW2hLRpb6i2hqOg"; 
+    const MODEL_ID = "gemini-1.5-flash"; 
     const DB_SEED_URL = "https://api.dicebear.com/7.x/avataaars/svg?seed=";
 
     const KLASSE = {
@@ -154,7 +155,7 @@
 
     async function fetchGemini(userQuery) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${apiKey}`;
-        const delays = [1000, 2000, 4000, 8000, 16000];
+        const delays = [1000, 2000, 4000];
         
         const systemPrompt = "Du bist ein KI-Modell für ein Rollenspiel einer Schulklasse in Zürich. Deine Antworten müssen IMMER im JSON-Format sein.";
 
@@ -164,24 +165,25 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: userQuery }] }],
-                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        contents: [{ 
+                            role: "user",
+                            parts: [{ text: userQuery }] 
+                        }],
+                        systemInstruction: { 
+                            parts: [{ text: systemPrompt }] 
+                        },
                         generationConfig: { 
                             responseMimeType: "application/json"
                         }
                     })
                 });
                 
-                if (!response.ok) {
-                    const errorBody = await response.text();
-                    console.error("API Error Details:", errorBody);
-                    throw new Error(`HTTP ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
                 const data = await response.json();
-                return JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text || "{}");
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+                return JSON.parse(text);
             } catch (err) {
-                console.warn(`Retry ${i+1}...`, err);
                 if (i === delays.length) return null;
                 await new Promise(r => setTimeout(r, delays[i]));
             }
@@ -276,7 +278,7 @@
         input.value = ""; renderMessages();
         
         document.getElementById('typing-indicator').classList.remove('hidden');
-        const prompt = `Antworte als ${activeChat} (${KLASSE[activeChat].style}) auf ${currentUser}: "${text}". Berücksichtige eure Beziehung (${getRel(activeChat)}%). JSON Schema: {"reply": "text", "relChange": number, "repChange": number}`;
+        const prompt = `Antworte als ${activeChat} (Bio: ${KLASSE[activeChat].bio}, Style: ${KLASSE[activeChat].style}) auf ${currentUser}: "${text}". Beziehung: ${getRel(activeChat)}%. JSON Schema: {"reply": "text", "relChange": number, "repChange": number}`;
         const data = await fetchGemini(prompt);
         if (data) {
             globalState.history[key].push({ sender: activeChat, text: data.reply });
