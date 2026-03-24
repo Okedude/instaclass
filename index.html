@@ -109,9 +109,8 @@
 </div>
 
 <script>
-    const apiKey = "AIzaSyAjARcxPPzrSs7v22qYFW2hLRpb6i2hqOg"; 
-    // FIX: Use the explicit versioned model ID for public v1beta endpoint
-    const MODEL_ID = "gemini-1.5-flash-001"; 
+    const apiKey = ""; 
+    const MODEL_ID = "gemini-2.5-flash-preview-09-2025"; 
     const DB_SEED_URL = "https://api.dicebear.com/7.x/avataaars/svg?seed=";
 
     const KLASSE = {
@@ -153,17 +152,20 @@
 
     function save() { localStorage.setItem('instaClass_v7', JSON.stringify(globalState)); }
 
-    async function fetchGemini(prompt) {
+    async function fetchGemini(userQuery) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${apiKey}`;
         const delays = [1000, 2000, 4000, 8000, 16000];
         
+        const systemPrompt = "Du bist ein KI-Modell für ein Rollenspiel einer Schulklasse in Zürich. Deine Antworten müssen IMMER im JSON-Format sein.";
+
         for (let i = 0; i <= delays.length; i++) {
             try {
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
                         generationConfig: { 
                             responseMimeType: "application/json"
                         }
@@ -177,7 +179,7 @@
                 }
                 
                 const data = await response.json();
-                return JSON.parse(data.candidates[0].content.parts[0].text);
+                return JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text || "{}");
             } catch (err) {
                 console.warn(`Retry ${i+1}...`, err);
                 if (i === delays.length) return null;
@@ -274,7 +276,7 @@
         input.value = ""; renderMessages();
         
         document.getElementById('typing-indicator').classList.remove('hidden');
-        const prompt = `Antworte als ${activeChat} (${KLASSE[activeChat].style}) auf ${currentUser}: "${text}". JSON: {"reply": "...", "relChange": -5..5, "repChange": -2..2}`;
+        const prompt = `Antworte als ${activeChat} (${KLASSE[activeChat].style}) auf ${currentUser}: "${text}". Berücksichtige eure Beziehung (${getRel(activeChat)}%). JSON Schema: {"reply": "text", "relChange": number, "repChange": number}`;
         const data = await fetchGemini(prompt);
         if (data) {
             globalState.history[key].push({ sender: activeChat, text: data.reply });
@@ -332,7 +334,7 @@
         if (!text) return;
         globalState.feed.push({ user: currentUser, text });
         save(); renderFeed(); closePostModal();
-        const prompt = `Post von ${currentUser}: "${text}". Wie reagiert die Klasse? JSON: {"repDelta": -5..5, "comment": "...", "author": "Name"}`;
+        const prompt = `Post von ${currentUser}: "${text}". Wie reagiert die Klasse? JSON Schema: {"repDelta": number, "comment": "text", "author": "Name"}`;
         const data = await fetchGemini(prompt);
         if (data) {
             setRep(currentUser, data.repDelta);
