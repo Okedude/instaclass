@@ -91,7 +91,7 @@
         <div id="typing-indicator" class="hidden px-6 py-2 text-[10px] italic text-gray-400 font-bold uppercase tracking-wider">Tippt...</div>
         <div id="chat-input-area" class="p-4 border-t flex gap-2 bg-white">
             <input type="text" id="chat-input" placeholder="Nachricht an die Klasse..." class="flex-1 bg-gray-100 p-3 rounded-2xl outline-none text-sm">
-            <button onclick="sendMessage()" class="text-[#0095f6] font-bold px-2">Senden</button>
+            <button id="send-btn" onclick="sendMessage()" class="text-[#0095f6] font-bold px-2">Senden</button>
         </div>
     </div>
 
@@ -103,40 +103,41 @@
                 <button onclick="closePostModal()"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
             </div>
             <textarea id="post-input" placeholder="Teile Gossip oder ein Update..." class="w-full h-24 p-4 bg-gray-50 rounded-xl border text-sm mb-4"></textarea>
-            <button onclick="createNewPost()" class="w-full bg-[#0095f6] text-white py-4 rounded-xl font-bold">Veröffentlichen</button>
+            <button id="publish-btn" onclick="createNewPost()" class="w-full bg-[#0095f6] text-white py-4 rounded-xl font-bold">Veröffentlichen</button>
         </div>
     </div>
 </div>
 
 <script>
+    // Config for GitHub Pages Deployment
     const apiKey = "AIzaSyAjARcxPPzrSs7v22qYFW2hLRpb6i2hqOg"; 
+    const MODEL_ID = "gemini-2.5-flash-preview-09-2025";
     const DB_SEED_URL = "https://api.dicebear.com/7.x/avataaars/svg?seed=";
-    const MODEL_ID = "gemini-2.5-flash-preview-09-2025"; 
 
     const KLASSE = {
         "Adriana S.": { seed: "Adriana", bio: "Arrogant, Moncler-Brille. Liebt Partys & Parallelklasse.", style: "Snobby, herablassend.", friends: ["Nila", "Eileen", "Helena", "Cedric", "Max", "Leif"], hates: ["William", "Tim", "Elisa", "Anna G.", "Anna P."] },
         "Anna G.": { seed: "AnnaG", bio: "Trinkt Alkohol, Vergangenheit mit Konsum. Sehr offen, lacht oft, schlechte Noten.", style: "Direkt, offen, sympathisch.", friends: ["Anna P.", "Tim", "Leif", "Max", "Jacob"], hates: ["Adriana S.", "William", "Cedric"] },
-        "Anna P.": { seed: "AnnaP", bio: "Beste Freundin von Anna G. Wohnt in Küsnacht, spielt Tennis, 15 Jahre alt. Grosse Augen.", style: "Sympathisch, offen, direkt.", friends: ["Anna G.", "Tim", "Alex Z.", "Lino", "Jacob", "Max", "Leif", "Nick", "Sämi", "Valerie"], hates: [] },
-        "Cedric": { seed: "Cedric", bio: "Liebt GCZ. Trägt grüne Adidas Jacke & beige Schuhe. Steht auf Emmanuel Schmucki.", style: "Defensiv, keine echten Freunde in der Klasse.", friends: ["Luc", "Sean", "Adriana S.", "Eileen", "Helena", "Nila", "Tim-Oliver"], hates: ["Leif", "Tim"] },
+        "Anna P.": { seed: "AnnaP", bio: "Beste Freundin von Anna G. Wohnt in Küsnacht, spielt Tennis, 15 Jahre alt.", style: "Sympathisch, offen, direkt.", friends: ["Anna G.", "Tim", "Alex Z.", "Lino", "Jacob", "Max", "Leif", "Nick", "Sämi", "Valerie"], hates: [] },
+        "Cedric": { seed: "Cedric", bio: "Liebt GCZ. Trägt grüne Adidas Jacke. Steht auf Emmanuel Schmucki.", style: "Defensiv, keine echten Freunde.", friends: ["Luc", "Sean", "Adriana S.", "Eileen", "Helena", "Nila", "Tim-Oliver"], hates: ["Leif", "Tim"] },
         "Eileen": { seed: "Eileen", bio: "Küsnacht. Austausch Costa-Rica. Blonde Haare, 16, humorvoll.", style: "Humorvoll, lacht viel.", friends: ["Luc", "Sean", "Cedric", "Adriana S.", "Nila", "Helena", "Mila", "Paulina"], hates: ["William"] },
-        "Elin": { seed: "Elin", bio: "Vater hat Apotheke, 2 Hunde (Clooney). Wohnt in Zollikon, 175cm. Spielt Volleyball.", style: "Gepflegt, ruhig.", friends: ["Zofia", "Elisa", "Emma", "Tim", "William", "Jacob", "Lily-Marie", "Julia"], hates: ["Adriana S."] },
-        "Elisa": { seed: "Elisa", bio: "Romandie-Austausch. Spricht Französisch, weiss viel Tratsch. Wohnt in Thalwil.", style: "Nett, redet viel, Tratschtante.", friends: ["Tim", "William", "Elin", "Zofia", "Emma", "Jacob", "Lily-Marie", "Julia"], hates: ["Cedric", "Adriana S.", "William"] },
-        "Emma": { seed: "Emma", bio: "Aus Schweden, FCZ-Fan. Freund: Max. War in Hastings. 177cm.", style: "Direkt, abenteuerlustig, teils verschlossen.", friends: ["Tim", "William", "Elin", "Zofia", "Lily-Marie", "Anna P.", "Anna G.", "Julia"], hates: ["Cedric"] },
-        "Helena": { seed: "Helena", bio: "Austausch USA. Familie gehört Tina Turner Haus (850 Mio). Lipsync Tiktok.", style: "Arrogant, reich, teils nett.", friends: ["Adriana S.", "Nila", "Eileen", "Mila", "Paulina", "Cedric", "Luc", "Sean"], hates: ["William", "Lily-Marie"] },
-        "Jacob": { seed: "Jacob", bio: "Introvertierter Deutscher, Bisexuell. Trägt Nikin. Gewerberaum für Kinoabende.", style: "Nett wenn man ihn kennt, introvertiert.", friends: ["William", "Tim-Oliver", "Tim", "Leif", "Anna G.", "Anna P."], hates: ["Max"] },
-        "Jara": { seed: "Jara", bio: "Austausch Australien. Mag Roblox & Pferde. Italienischprofil.", style: "Introvertiert, in der Gruppe extrovertiert.", friends: ["Anna G.", "Anna P.", "Leif", "Tim", "Jacob"], hates: ["Cedric", "Adriana S."] },
-        "Julia": { seed: "Julia", bio: "Meilen, 15. Mag Pferde & Ballett. Strenge Mutter.", style: "Introvertiert, ruhig.", friends: ["Elisa", "Elin", "Emma", "Zofia", "Lily-Marie", "William", "Tim"], hates: [] },
-        "Leif": { seed: "Leif", bio: "Fluffy Hair (Sea salt). Musik & Anime. Kleidung aus Tschechien. Egozentrisch.", style: "Egozentrisch, herablassend, arrogant.", friends: ["Tim", "Max", "Jacob", "Anna P.", "Anna G.", "Cedric", "Elias"], hates: ["Cedric", "Adriana S."] },
-        "Lily-Marie": { seed: "LilyMarie", bio: "Österreicherin, Streberin. Skifahren in St. Anton. Sehr hilfsbereit.", style: "Nett, hilfsbereit, teils arrogant wirkend.", friends: ["Zofia", "Emma", "Elin", "Elisa", "Tim", "William", "Julia"], hates: [] },
-        "Luc": { seed: "Luc", bio: "Austausch USA. Blackpillmogger. Fühlt sich als Macho.", style: "Macho, extrovertiert, teils nett.", friends: ["Sean", "Adriana S.", "Eileen", "Nila", "Helena", "Cedric"], hates: [] },
-        "Max": { seed: "Max", bio: "16, Freund von Emma. Trägt Alpha Industries. Geht viel ins Gym.", style: "Gym-Physique, teils arrogant.", friends: ["Leif", "Tim", "Anna G.", "Anna P.", "Emma", "William"], hates: ["Cedric"] },
-        "Nila": { seed: "Nila", bio: "Höflich, blonde Haare. Hasst Geschichte. Trinkt wenig an Partys.", style: "Höflich, zuvorkommend, selten frech.", friends: ["Adriana S.", "Eileen", "Helena", "Cedric", "Luc", "Sean"], hates: [] },
-        "Sean": { seed: "Sean", bio: "Austausch Neuseeland. Trinkt gerne Bier. Kecke Art.", style: "Extrovertiert, nett, keck.", friends: ["Luc", "Cedric", "Nila", "Adriana S.", "Paulina", "Mila", "Theo"], hates: [] },
-        "Tim-Oliver": { seed: "Toli", bio: "Esslingen. Hat Haus renoviert. Extrem introvertiert, lacht über alles.", style: "Asozial wirkend, eigentlich nett.", friends: ["Leif", "Jacob", "Tim"], hates: [] },
-        "William": { seed: "William", bio: "Mongolei, sehr kleinwüchsig aber humorvoll. Streber, sehr respektvoll.", style: "Offen, respektvoll, umsichtig.", friends: ["Zofia", "Julia", "Lily-Marie", "Emma", "Elisa", "Elin", "Tim", "Leif", "Jacob", "Max", "Cedric"], hates: ["Adriana S."] },
-        "Zofia": { seed: "Zofia", bio: "Spanischprofil, Streber-Tendenzen. Beliebt bei Lehrern.", style: "Nett, offen, ambrivertiert.", friends: ["Julia", "Lily-Marie", "Emma", "Elisa", "Elin", "Tim", "William"], hates: [] },
-        "Ellison": { seed: "Ellison", bio: "USA, Politisch interessiert. Kann fies & fake sein. Schwer zu knacken.", style: "Fake, fies, diskussionsfreudig.", friends: ["Adriana S.", "Eileen", "Nila", "Helena", "Cedric", "Luc", "Sean"], hates: ["William"] },
-        "Tim": { seed: "TimItalo", bio: "Hypersozialer Italiener. Hasst falsche Pasta. Läster-König.", style: "Starke Meinung, lästert viel.", friends: ["William", "Leif", "Anna G.", "Anna P.", "Jacob", "Max", "Tim-Oliver", "Elisa", "Lily-Marie", "Zofia", "Emma", "Julia", "Eileen", "Nila", "Jara"], hates: ["Cedric", "Adriana S."] }
+        "Elin": { seed: "Elin", bio: "Vater hat Apotheke, 2 Hunde (Clooney). Wohnt in Zollikon, 175cm.", style: "Gepflegt, ruhig.", friends: ["Zofia", "Elisa", "Emma", "Tim", "William", "Jacob", "Lily-Marie", "Julia"], hates: ["Adriana S."] },
+        "Elisa": { seed: "Elisa", bio: "Romandie-Austausch. Tratschtante aus Thalwil.", style: "Nett, redet viel.", friends: ["Tim", "William", "Elin", "Zofia", "Emma", "Jacob", "Lily-Marie", "Julia"], hates: ["Cedric", "Adriana S.", "William"] },
+        "Emma": { seed: "Emma", bio: "Aus Schweden, FCZ-Fan. Freund: Max.", style: "Direkt, abenteuerlustig.", friends: ["Tim", "William", "Elin", "Zofia", "Lily-Marie", "Anna P.", "Anna G.", "Julia"], hates: ["Cedric"] },
+        "Helena": { seed: "Helena", bio: "Reich (Tina Turner Haus Nachbar). Lipsync Tiktok.", style: "Arrogant, reich, teils nett.", friends: ["Adriana S.", "Nila", "Eileen", "Mila", "Paulina", "Cedric", "Luc", "Sean"], hates: ["William", "Lily-Marie"] },
+        "Jacob": { seed: "Jacob", bio: "Introvertierter Deutscher. Nikin-Fan. Kinoabende.", style: "Nett, introvertiert.", friends: ["William", "Tim-Oliver", "Tim", "Leif", "Anna G.", "Anna P."], hates: ["Max"] },
+        "Jara": { seed: "Jara", bio: "Austausch Australien. Mag Roblox.", style: "Introvertiert.", friends: ["Anna G.", "Anna P.", "Leif", "Tim", "Jacob"], hates: ["Cedric", "Adriana S."] },
+        "Julia": { seed: "Julia", bio: "Meilen, 15. Mag Pferde & Ballett.", style: "Ruhig, introvertiert.", friends: ["Elisa", "Elin", "Emma", "Zofia", "Lily-Marie", "William", "Tim"], hates: [] },
+        "Leif": { seed: "Leif", bio: "Fluffy Hair. Musik & Anime. Tschechien-Kleidung.", style: "Egozentrisch, arrogant.", friends: ["Tim", "Max", "Jacob", "Anna P.", "Anna G.", "Cedric", "Elias"], hates: ["Cedric", "Adriana S."] },
+        "Lily-Marie": { seed: "LilyMarie", bio: "Österreicherin, Streberin. St. Anton Skifahren.", style: "Hilfsbereit, teils arrogant.", friends: ["Zofia", "Emma", "Elin", "Elisa", "Tim", "William", "Julia"], hates: [] },
+        "Luc": { seed: "Luc", bio: "Austausch USA. Blackpillmogger. Macho.", style: "Macho, extrovertiert.", friends: ["Sean", "Adriana S.", "Eileen", "Nila", "Helena", "Cedric"], hates: [] },
+        "Max": { seed: "Max", bio: "Gym-Fan, Freund von Emma. Alpha Industries.", style: "Gym-Physique, teils arrogant.", friends: ["Leif", "Tim", "Anna G.", "Anna P.", "Emma", "William"], hates: ["Cedric"] },
+        "Nila": { seed: "Nila", bio: "Höflich, blonde Haare. Hasst Geschichte.", style: "Höflich, zuvorkommend.", friends: ["Adriana S.", "Eileen", "Helena", "Cedric", "Luc", "Sean"], hates: [] },
+        "Sean": { seed: "Sean", bio: "Austausch Neuseeland. Trinkt gerne Bier.", style: "Extrovertiert, keck.", friends: ["Luc", "Cedric", "Nila", "Adriana S.", "Paulina", "Mila", "Theo"], hates: [] },
+        "Tim-Oliver": { seed: "Toli", bio: "Esslingen. Hat Haus renoviert. Introvertiert.", style: "Asozial wirtend, eigentlich nett.", friends: ["Leif", "Jacob", "Tim"], hates: [] },
+        "William": { seed: "William", bio: "Mongolei, humorvoll, respektvoll. Streber.", style: "Offen, respektvoll.", friends: ["Zofia", "Julia", "Lily-Marie", "Emma", "Elisa", "Elin", "Tim", "Leif", "Jacob", "Max", "Cedric"], hates: ["Adriana S."] },
+        "Zofia": { seed: "Zofia", bio: "Spanischprofil, Streber-Tendenzen.", style: "Nett, offen.", friends: ["Julia", "Lily-Marie", "Emma", "Elisa", "Elin", "Tim", "William"], hates: [] },
+        "Ellison": { seed: "Ellison", bio: "USA, Politisch. Kann fies & fake sein.", style: "Fake, fies.", friends: ["Adriana S.", "Eileen", "Nila", "Helena", "Cedric", "Luc", "Sean"], hates: ["William"] },
+        "Tim": { seed: "TimItalo", bio: "Italiener. Läster-König. Hasst falsche Pasta.", style: "Starke Meinung, lästert viel.", friends: ["William", "Leif", "Anna G.", "Anna P.", "Jacob", "Max", "Tim-Oliver", "Elisa", "Lily-Marie", "Zofia", "Emma", "Julia", "Eileen", "Nila", "Jara"], hates: ["Cedric", "Adriana S."] }
     };
 
     let globalState = JSON.parse(localStorage.getItem('instaClass_v7')) || {
@@ -152,159 +153,97 @@
 
     function save() { localStorage.setItem('instaClass_v7', JSON.stringify(globalState)); }
 
-    function getRep(name) { return globalState.reputation[name] || 50; }
-    
-    function calculateInitialRel(userA, userB) {
-        let score = 50;
-        const charA = KLASSE[userA];
-        const charB = KLASSE[userB];
-        if (charA.friends.includes(userB) || charA.friends.includes(userB.split(' ')[0])) score += 30;
-        if (charB.friends.includes(userA) || charB.friends.includes(userA.split(' ')[0])) score += 30;
-        if (charA.hates.includes(userB) || charA.hates.includes(userB.split(' ')[0])) score -= 40;
-        if (charB.hates.includes(userA) || charB.hates.includes(userA.split(' ')[0])) score -= 40;
-        return Math.max(0, Math.min(100, score));
-    }
-
-    function getRel(name) { 
-        if (!currentUser || !name) return 50;
-        const key = [currentUser, name].sort().join('_');
-        if (globalState.relationships[key] === undefined) {
-            globalState.relationships[key] = calculateInitialRel(currentUser, name);
-            save();
+    async function fetchGemini(prompt) {
+        // Updated URL construction
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${apiKey}`;
+        const delays = [1000, 2000, 4000, 8000, 16000];
+        
+        for (let i = 0; i <= delays.length; i++) {
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { 
+                            responseMimeType: "application/json"
+                        }
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    console.error("API Error Details:", errorBody);
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return JSON.parse(data.candidates[0].content.parts[0].text);
+            } catch (err) {
+                console.warn(`Retry ${i+1}...`, err);
+                if (i === delays.length) return null;
+                await new Promise(r => setTimeout(r, delays[i]));
+            }
         }
-        return globalState.relationships[key]; 
     }
 
-    function setRel(name, delta) {
-        if (!currentUser || !name) return;
-        const key = [currentUser, name].sort().join('_');
-        const oldVal = getRel(name);
-        globalState.relationships[key] = Math.max(0, Math.min(100, oldVal + delta));
-        save();
-        if (activeChat === name) updateChatHeaderRel();
-    }
-
+    function getRep(name) { return globalState.reputation[name] || 50; }
     function setRep(name, delta) { 
         globalState.reputation[name] = Math.max(0, Math.min(100, getRep(name) + delta));
         save();
         if (currentUser === name) updateHeader();
     }
 
+    function getRel(name) { 
+        const key = [currentUser, name].sort().join('_');
+        if (globalState.relationships[key] === undefined) {
+            globalState.relationships[key] = 50;
+            save();
+        }
+        return globalState.relationships[key]; 
+    }
+
+    function setRel(name, delta) {
+        const key = [currentUser, name].sort().join('_');
+        globalState.relationships[key] = Math.max(0, Math.min(100, getRel(name) + delta));
+        save();
+        if (activeChat === name) updateChatHeaderRel();
+    }
+
     function updateHeader() {
         if (!currentUser) return;
         const rep = getRep(currentUser);
-        let rank = "Normaler Schüler";
-        let color = "text-gray-400";
-        if (rep > 85) { rank = "Klassen-Idol"; color = "text-yellow-500"; }
-        else if (rep > 65) { rank = "Beliebt"; color = "text-green-500"; }
-        else if (rep < 25) { rank = "Target"; color = "text-red-500 font-black uppercase"; }
-        const el = document.getElementById('user-reputation');
-        if (el) el.innerHTML = `<span class="${color}">★ ${rank} (${rep}%)</span>`;
+        const rank = rep > 85 ? "Idol" : (rep > 65 ? "Beliebt" : (rep < 25 ? "Target" : "Normal"));
+        document.getElementById('user-reputation').innerHTML = `★ ${rank} (${rep}%)`;
     }
 
     function initLogin() {
         const list = document.getElementById('login-list');
-        if (!list) return;
-        list.innerHTML = "";
-        Object.keys(KLASSE).sort().forEach(name => {
-            const btn = document.createElement('button');
-            btn.className = "w-full flex items-center justify-between p-4 bg-white hover:bg-gray-100 rounded-xl transition border active:scale-95";
-            btn.onclick = () => login(name);
-            btn.innerHTML = `
-                <div class="flex items-center gap-4 text-left">
-                    <img src="${DB_SEED_URL + KLASSE[name].seed}" class="w-12 h-12 rounded-full border shadow-sm">
+        list.innerHTML = Object.keys(KLASSE).sort().map(name => `
+            <button onclick="login('${name}')" class="w-full flex items-center justify-between p-4 bg-white border rounded-xl hover:bg-gray-50 active:scale-95 transition">
+                <div class="flex items-center gap-3">
+                    <img src="${DB_SEED_URL + KLASSE[name].seed}" class="w-10 h-10 rounded-full border">
                     <span class="font-bold text-sm">${name}</span>
                 </div>
-                <div class="flex flex-col items-end">
-                    <span class="text-[9px] font-black text-blue-500 uppercase tracking-tighter">${getRep(name)}% Image</span>
-                </div>
-            `;
-            list.appendChild(btn);
-        });
-        Object.keys(KLASSE).forEach(name => {
-            if (globalState.onlineStatus[name] === undefined) globalState.onlineStatus[name] = Math.random() > 0.4;
-        });
-        updateGlobalOnlineCount();
+                <span class="text-[10px] font-black text-blue-500">${getRep(name)}%</span>
+            </button>
+        `).join('');
     }
 
     function login(name) {
         currentUser = name;
-        const navImg = document.getElementById('nav-avatar-img');
-        if (navImg) navImg.src = DB_SEED_URL + KLASSE[name].seed;
+        document.getElementById('nav-avatar-img').src = DB_SEED_URL + KLASSE[name].seed;
         document.getElementById('login-screen').classList.add('hidden');
-        updateHeader(); renderStories(); triggerGossip(); renderFeed();
+        updateHeader(); renderStories(); renderFeed();
     }
 
-    function logout() {
-        currentUser = null;
-        document.getElementById('login-screen').classList.remove('hidden');
-        initLogin();
-    }
-
-    function updateGlobalOnlineCount() {
-        const count = Object.values(globalState.onlineStatus).filter(v => v).length;
-        const el = document.getElementById('global-online-count');
-        if (el) el.innerText = `● ${count} Online`;
-    }
-
-    async function fetchGemini(prompt) {
-        // Use the absolute URL as specified in the environment rules
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${apiKey}`;
-        
-        const retryCount = 5;
-        for (let i = 0; i < retryCount; i++) {
-            try {
-                const res = await fetch(url, {
-                    method: "POST", 
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ 
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: { 
-                            responseMimeType: "application/json" 
-                        }
-                    })
-                });
-
-                if (!res.ok) {
-                    throw new Error(`API error: ${res.status}`);
-                }
-
-                const data = await res.json();
-                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!text) return null;
-                return JSON.parse(text);
-            } catch (e) {
-                if (i === retryCount - 1) {
-                    // Fail silently after retries as per environment rules
-                    return null;
-                }
-                const wait = Math.pow(2, i) * 1000;
-                await new Promise(r => setTimeout(r, wait));
-            }
-        }
-        return null;
-    }
-
-    async function triggerGossip() {
-        if (Math.random() > 0.6) return;
-        const users = Object.keys(KLASSE);
-        const randomUser = users[Math.floor(Math.random() * users.length)];
-        if (randomUser === currentUser) return;
-        const prompt = `Gossip-Post (max 15 Wörter) von ${randomUser}. Nutze Fakten: Adriana/Moncler, Cedric/GCZ, Leif/Tschechien-Kleidung, Max/Gym. JSON: {"target": "Name", "text": "...", "impact": -5 bis 5}`;
-        const data = await fetchGemini(prompt);
-        if (data) {
-            globalState.feed.push({ id: Date.now(), user: randomUser, text: data.text, type: 'gossip' });
-            if (data.target && KLASSE[data.target]) setRep(data.target, data.impact);
-            save(); renderFeed();
-        }
-    }
+    function logout() { currentUser = null; document.getElementById('login-screen').classList.remove('hidden'); }
 
     function openChat(name) {
         activeChat = name;
         document.getElementById('chat-view').classList.remove('hidden');
         document.getElementById('chat-header-name').innerText = name;
         document.getElementById('chat-header-img').src = DB_SEED_URL + KLASSE[name].seed;
-        document.getElementById('chat-header-online').className = `online-indicator ${globalState.onlineStatus[name] ? 'is-online' : 'is-offline'}`;
         updateChatHeaderRel(); renderMessages();
     }
 
@@ -312,22 +251,18 @@
         if (!activeChat) return;
         const val = getRel(activeChat);
         document.getElementById('chat-rel-val').innerText = val + "%";
-        const relBarEl = document.getElementById('chat-rel-bar');
-        relBarEl.style.width = val + "%";
-        relBarEl.className = val > 75 ? "rel-bar-fill bg-green-500" : (val < 30 ? "rel-bar-fill bg-red-500" : "rel-bar-fill bg-blue-500");
+        document.getElementById('chat-rel-bar').style.width = val + "%";
     }
 
     function renderMessages() {
-        if (!activeChat) return;
         const key = [currentUser, activeChat].sort().join('_');
         const msgs = globalState.history[key] || [];
-        const cont = document.getElementById('chat-msgs');
-        cont.innerHTML = msgs.map(m => `
+        document.getElementById('chat-msgs').innerHTML = msgs.map(m => `
             <div class="flex flex-col ${m.sender === currentUser ? 'items-end' : 'items-start'}">
                 <div class="chat-bubble ${m.sender === currentUser ? 'bubble-me' : 'bubble-them'}">${m.text}</div>
             </div>
         `).join('');
-        cont.scrollTop = cont.scrollHeight;
+        document.getElementById('chat-msgs').scrollTop = document.getElementById('chat-msgs').scrollHeight;
     }
 
     async function sendMessage() {
@@ -336,62 +271,55 @@
         if (!text || !activeChat) return;
         const key = [currentUser, activeChat].sort().join('_');
         if (!globalState.history[key]) globalState.history[key] = [];
-        globalState.history[key].push({ sender: currentUser, text, time: Date.now() });
+        globalState.history[key].push({ sender: currentUser, text });
         input.value = ""; renderMessages();
+        
         document.getElementById('typing-indicator').classList.remove('hidden');
-        const prompt = `Du bist ${activeChat}. Chat mit ${currentUser}. Stil: ${KLASSE[activeChat].style}. Bio: ${KLASSE[activeChat].bio}. Jugend-Slang. Beziehung: ${getRel(activeChat)}%. Nachricht: "${text}". JSON: {"reply": "...", "relChange": -5 bis +5, "repChange": -2 bis +2}`;
+        const prompt = `Antworte als ${activeChat} (${KLASSE[activeChat].style}) auf ${currentUser}: "${text}". JSON: {"reply": "...", "relChange": -5..5, "repChange": -2..2}`;
         const data = await fetchGemini(prompt);
         if (data) {
-            setTimeout(() => {
-                globalState.history[key].push({ sender: activeChat, text: data.reply, time: Date.now() });
-                if (data.relChange) setRel(activeChat, data.relChange);
-                if (data.repChange) setRep(currentUser, data.repChange);
-                save(); renderMessages();
-                document.getElementById('typing-indicator').classList.add('hidden');
-            }, 1000 + Math.random() * 1500);
-        } else {
-            document.getElementById('typing-indicator').classList.add('hidden');
+            globalState.history[key].push({ sender: activeChat, text: data.reply });
+            if (data.relChange) setRel(activeChat, data.relChange);
+            if (data.repChange) setRep(currentUser, data.repChange);
+            save(); renderMessages();
         }
+        document.getElementById('typing-indicator').classList.add('hidden');
     }
 
     function renderStories() {
-        const list = document.getElementById('stories-list');
-        list.innerHTML = Object.keys(KLASSE).filter(k => k !== currentUser).map(k => `
-            <div class="flex flex-col items-center gap-1 flex-shrink-0 cursor-pointer" onclick="openChat('${k}')">
-                <div class="story-ring relative">
-                    <div class="bg-white p-0.5 rounded-full"><img src="${DB_SEED_URL + KLASSE[k].seed}" class="w-10 h-10 rounded-full border"></div>
+        document.getElementById('stories-list').innerHTML = Object.keys(KLASSE).filter(k => k !== currentUser).map(k => `
+            <div onclick="openChat('${k}')" class="flex flex-col items-center gap-1 flex-shrink-0 cursor-pointer">
+                <div class="story-ring p-0.5 rounded-full bg-gradient-to-tr from-yellow-400 to-pink-600">
+                    <img src="${DB_SEED_URL + KLASSE[k].seed}" class="w-12 h-12 rounded-full border-2 border-white">
                 </div>
-                <span class="text-[8px] font-bold">${k.split(' ')[0]}</span>
+                <span class="text-[9px] font-bold">${k.split(' ')[0]}</span>
             </div>
         `).join('');
     }
 
     function renderFeed() {
-        const cont = document.getElementById('feed-container');
-        cont.innerHTML = globalState.feed.slice().reverse().map(p => `
-            <div class="p-4 border-b ${p.type === 'gossip' ? 'bg-orange-50/50' : ''}">
+        document.getElementById('feed-container').innerHTML = globalState.feed.slice().reverse().map(p => `
+            <div class="p-4 border-b">
                 <div class="flex items-center gap-2 mb-2">
                     <img src="${DB_SEED_URL + KLASSE[p.user]?.seed}" class="w-6 h-6 rounded-full border">
                     <span class="font-bold text-xs">${p.user}</span>
-                    ${p.type === 'gossip' ? '<span class="text-[9px] bg-orange-400 text-white px-1.5 py-0.5 rounded-full font-black uppercase">News</span>' : ''}
                 </div>
-                <p class="text-sm leading-snug">${p.text}</p>
+                <p class="text-sm">${p.text}</p>
             </div>
-        `).join('') || '<p class="p-8 text-center text-gray-400 text-xs uppercase font-bold italic tracking-wider">Keine News...</p>';
+        `).join('') || '<p class="p-10 text-center text-gray-400">Keine Posts</p>';
     }
 
     function openDMs() {
         document.getElementById('dm-view').classList.remove('hidden');
-        document.getElementById('dm-list').innerHTML = Object.keys(KLASSE).filter(k => k !== currentUser).map(k => {
-            const rel = getRel(k);
-            return `<div class="p-4 border-b flex items-center gap-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100" onclick="openChat('${k}')">
-                <img src="${DB_SEED_URL + KLASSE[k].seed}" class="w-12 h-12 rounded-full border shadow-sm">
-                <div class="flex-1 truncate">
-                    <div class="flex justify-between items-center mb-1"><span class="font-bold text-sm">${k}</span><span class="text-[9px] font-black text-blue-500 uppercase">${rel}% Rel</span></div>
-                    <div class="rel-bar-bg"><div class="rel-bar-fill bg-blue-400" style="width: ${rel}%;"></div></div>
+        document.getElementById('dm-list').innerHTML = Object.keys(KLASSE).filter(k => k !== currentUser).map(k => `
+            <div onclick="openChat('${k}')" class="p-4 border-b flex items-center gap-3 hover:bg-gray-50">
+                <img src="${DB_SEED_URL + KLASSE[k].seed}" class="w-12 h-12 rounded-full border">
+                <div class="flex-1">
+                    <div class="flex justify-between font-bold text-sm"><span>${k}</span><span>${getRel(k)}%</span></div>
+                    <div class="rel-bar-bg"><div class="rel-bar-fill bg-blue-500" style="width:${getRel(k)}%"></div></div>
                 </div>
-            </div>`;
-        }).join('');
+            </div>
+        `).join('');
     }
 
     function closeDMs() { document.getElementById('dm-view').classList.add('hidden'); }
@@ -399,20 +327,25 @@
     function showHome() { closeChat(); closeDMs(); }
     function openPostModal() { document.getElementById('post-modal').classList.remove('hidden'); }
     function closePostModal() { document.getElementById('post-modal').classList.add('hidden'); }
-    
+
     async function createNewPost() {
-        const input = document.getElementById('post-input');
-        const text = input.value.trim();
+        const text = document.getElementById('post-input').value.trim();
         if (!text) return;
-        const prompt = `Post von ${currentUser}: "${text}". Wie beeinflusst das sein Image? JSON: {"repDelta": -8 bis +8, "comment": "kurzer Kommentar eines Mitschülers", "author": "Name"}`;
+        globalState.feed.push({ user: currentUser, text });
+        save(); renderFeed(); closePostModal();
+        const prompt = `Post von ${currentUser}: "${text}". Wie reagiert die Klasse? JSON: {"repDelta": -5..5, "comment": "...", "author": "Name"}`;
         const data = await fetchGemini(prompt);
-        globalState.feed.push({ id: Date.now(), user: currentUser, text });
-        if (data?.repDelta) setRep(currentUser, data.repDelta);
-        save(); renderFeed(); closePostModal(); input.value = "";
-        if (data?.comment) {
-            setTimeout(() => { globalState.feed.push({ id: Date.now(), user: data.author, text: data.comment }); save(); renderFeed(); }, 1200);
+        if (data) {
+            setRep(currentUser, data.repDelta);
+            if (data.comment) {
+                setTimeout(() => {
+                    globalState.feed.push({ user: data.author, text: data.comment });
+                    save(); renderFeed();
+                }, 1500);
+            }
         }
     }
+
     window.onload = initLogin;
 </script>
 </body>
