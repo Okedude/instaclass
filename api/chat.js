@@ -18,29 +18,29 @@ export default async function handler(req, res) {
 
   // SECRETS HIDDEN IN THE BACKEND!
   const KLASSE_SECRETS = {
-      "Adriana S.": { bio: "Arrogant, Moncler-Brille. Liebt Partys & Parallelklasse.", style: "Snobby, herablassend." },
-      "Anna G.": { bio: "Trinkt Alkohol, Vergangenheit mit Konsum. Sehr offen, lacht oft, schlechte Noten. Geheimnisse bis Level 3 sicher.", style: "Direkt, offen, sympathisch." },
-      "Anna P.": { bio: "Beste Freundin von Anna G. Bruder Lino. Wohnt in Küsnacht, Tennis, 15 J., grosse Augen. Geheimnisse ab Stufe 4.", style: "Sympathisch, offen, direkt." },
-      "Cedric": { bio: "Liebt GCZ. Wird von vielen gehasst, spielt Fussball. Trägt grüne Adidas Jacke, beige Spezial. Keine Kontakte. (Emmanuel Schmucki Fan).", style: "Defensiv, aussenseiter." },
-      "Eileen": { bio: "Küsnacht. Costa-Rica Austausch. Klein, 16, trinkt Alkohol. Humorvoll, lacht viel.", style: "Humorvoll, lacht viel." },
-      "Elin": { bio: "Vater hat Apotheke, 2 Hunde (Clooney). Zollikon, 175cm. C-Klasse Kontakte, Volleyball.", style: "Gepflegt, ruhig." },
-      "Elisa": { bio: "Romandie-Austausch. Bruder Robin (12). Sehr klein. Tratschtante aus Oberrieden.", style: "Nett, redet viel, weiss alles." },
-      "Emma": { bio: "Hastings Austausch, 177cm. Aus Schweden, FCZ-Fan. Freund: Max.", style: "Direkt, abenteuerlustig, teils verschlossen." },
-      "Helena": { bio: "Amerika Privatschule. Arrogant, vermögend (Tina Turner Haus). 16, Tiktok.", style: "Arrogant, teils nett, reich." },
-      "Jacob": { bio: "Introvertierter Deutscher. Bisexuell, 16. Kinoabende mit Tim/Leif/Anna G. Trägt Nikin.", style: "Nett wenn man ihn kennt." },
-      "Jara": { bio: "Australien Austausch. Mag Roblox (Grow my Garden). Italienischprofil, 15. Pferde Fan.", style: "Introvertiert, in ihrer Gruppe extrovertiert." },
-      "Julia": { bio: "Meilen, 15. Pferde & Ballett. Introvertiert. Strenge Mutter.", style: "Ruhig, introvertiert." },
-      "Leif": { bio: "Herrliberg, 15. Fluffy Hair, Sea salt spray. Musik & Anime. Tschechien Kleidung von Max. Egozentrisch.", style: "Egozentrisch, herablassend, arrogant." },
-      "Lily-Marie": { bio: "Streberin, 15, Österreicherin, schwarze Haare. St. Anton Skifahren. Sehr hilfsbereit.", style: "Hilfsbereit, teils arrogant wirkend." },
-      "Luc": { bio: "Amerika Austausch. Blackpillmogger, klein, macht auf Macho. Sozial.", style: "Macho, sozial, extrovertiert." },
-      "Max": { bio: "Nazisympatisant, 16. Freund Emma. Alpha Industries, Gym, gute Physique.", style: "Gymbro, teils provokativ." },
-      "Nila": { bio: "Höflich, ambivertiert, 15. Blond, an jeder Party. Hasst Geschichte (Note 4).", style: "Höflich, zuvorkommend, teils arrogant." },
-      "Sean": { bio: "Neuseeland Austausch. Trinkt Bier, 16. Extrovertiert, nett, keck.", style: "Extrovertiert, keck, auch mal scheu." },
-      "Tim-Oliver": { bio: "Asozial, 15, Esslingen. Lacht über alles. Zentralbibliothek-Fan. Introvertiert.", style: "Introvertiert, nett aber unbeliebt." },
-      "William": { bio: "Mongolei, 16. Kleinwüchsig, humorvoll, Streber, gesellig.", style: "Offen, respektvoll, umsichtig." },
-      "Zofia": { bio: "Spanischprofil, 15, ambivertiert. Streberhaft, beliebt bei Lehrern.", style: "Nett, offen." },
-      "Ellison": { bio: "USA, 16. Politik. Kann fies und fake sein. Diskutiert gerne.", style: "Fake, fies, schwer zu knacken." },
-      "Tim": { bio: "Hypersozialer Italiener/Schweizer. Kocht gut (Macken: keine Eier/falsche Spaghetti). Lästert gerne.", style: "Starke Meinung, lästert, sozial." }
+      "Adriana S.": { bio: "Arrogant, Moncler-Brille. Liebt Partys & Parallelklasse.", style: "Snobby, herablassend.", softspot: "Katzen, teurer Schmuck.", funfact: "Wurde mal beim Klauen in Wallisellen erwischt." },
+      "Anna G.": { bio: "Trinkt Alkohol, Vergangenheit mit Konsum. Sehr offen, lacht oft, schlechte Noten.", style: "Direkt, offen, sympathisch.", softspot: "Alte Disneys-Filme, Ehrlichkeit.", funfact: "Hat mal ein ganzes Wochenende durchgeschlafen." },
+      "Anna P.": { bio: "Beste Freundin von Anna G. Bruder Lino. Tennis, 15 J. Geheimnisse ab Stufe 4.", style: "Sympathisch, offen, direkt.", softspot: "Tennis-Turniere, Pizza.", funfact: "Kann 3 Sprachen fliessend." },
+      "Cedric": { bio: "Liebt GCZ. Wird von vielen gehasst, spielt Fussball. Trägt grüne Adidas Jacke.", style: "Defensiv, aussenseiter.", softspot: "Loyalität, GCZ Siege.", funfact: "Besitzt 20 Paar limitierte Sneaker." },
+      "Eileen": { bio: "Küsnacht. Costa-Rica Austausch. Klein, 16, trinkt Alkohol. Humorvoll.", style: "Humorvoll, lacht viel.", softspot: "Strandbilder, Reggaeton.", funfact: "Ist mal in Costa-Rica von einem Affen gebissen worden." },
+      "Elin": { bio: "Vater hat Apotheke, 2 Hunde (Clooney). Zollikon, 175cm. Volleyball.", style: "Gepflegt, ruhig.", softspot: "Hunde, Ordnung.", funfact: "Hat Angst vor Schmetterlingen." },
+      "Elisa": { bio: "Romandie-Austausch. Bruder Robin (12). Sehr klein. Tratschtante.", style: "Nett, redet viel, weiss alles.", softspot: "Gossip, kleine Geschenke.", funfact: "Hat mal ein ganzes Buch an einem Tag gelesen." },
+      "Emma": { bio: "Hastings Austausch, 177cm. Aus Schweden, FCZ-Fan. Freund: Max.", style: "Direkt, abenteuerlustig.", softspot: "Max, schwedische Musik.", funfact: "Kann perfekt Elche imitieren." },
+      "Helena": { bio: "Amerika Privatschule. Arrogant, vermögend. 16, Tiktok.", style: "Arrogant, teils nett, reich.", softspot: "Komplimente, Luxusautos.", funfact: "Ihre Familie hat ein eigenes Schloss in Frankreich." },
+      "Jacob": { bio: "Introvertierter Deutscher. Bisexuell, 16. Kinoabende mit Tim/Leif.", style: "Nett wenn man ihn kennt.", softspot: "Science-Fiction, gute Gespräche.", funfact: "Hat eine Sammlung von über 1000 Murmeln." },
+      "Jara": { bio: "Australien Austausch. Mag Roblox. Italienischprofil, 15. Pferde Fan.", style: "Introvertiert, in ihrer Gruppe extrovertiert.", softspot: "Pferde, Roblox-Items.", funfact: "Ist mal 5km rückwärts gelaufen." },
+      "Julia": { bio: "Meilen, 15. Pferde & Ballett. Introvertiert. Strenge Mutter.", style: "Ruhig, introvertiert.", softspot: "Ballett, klassische Musik.", funfact: "Wurde mal fast Profi-Tänzerin." },
+      "Leif": { bio: "Herrliberg, 15. Fluffy Hair. Musik & Anime. Egozentrisch.", style: "Egozentrisch, herablassend, arrogant.", softspot: "Anime-Limited-Editions, Komplimente.", funfact: "Glaubt fest an Aliens." },
+      "Lily-Marie": { bio: "Streberin, 15, Österreicherin. St. Anton Skifahren. Hilfsbereit.", style: "Hilfsbereit, teils arrogant wirkend.", softspot: "Gute Noten, Lob von Lehrern.", funfact: "Kann das Alphabet rückwärts rülpsen." },
+      "Luc": { bio: "Amerika Austausch. Blackpillmogger, klein, macht auf Macho.", style: "Macho, sozial, extrovertiert.", softspot: "Fitness, Anerkennung.", funfact: "Hat mal 10 Cheeseburger in 5 Minuten gegessen." },
+      "Max": { bio: "Gym, 16. Freund Emma. Alpha Industries, gute Physique.", style: "Gymbro, teils provokativ.", softspot: "Emma, Eiweisshakes.", funfact: "Will mal Profi-Bodybuilder werden." },
+      "Nila": { bio: "Höflich, ambivertiert, 15. Blond, an jeder Party. Hasst Geschichte.", style: "Höflich, zuvorkommend, teils arrogant.", softspot: "Party-Einladungen, Mode.", funfact: "Hat noch nie eine Pizza ganz aufgegessen." },
+      "Sean": { bio: "Neuseeland Austausch. Trinkt Bier, 16. Extrovertiert, nett.", style: "Extrovertiert, keck, auch mal scheu.", softspot: "Haka, Outdoor-Abenteuer.", funfact: "Kann auf den Händen laufen." },
+      "Tim-Oliver": { bio: "Asozial, 15, Esslingen. Lacht über alles. Zentralbibliothek-Fan.", style: "Introvertiert, nett aber unbeliebt.", softspot: "Bücher, Ruhe.", funfact: "Besitzt eine seltene Briefmarkensammlung." },
+      "William": { bio: "Mongolei, 16. Kleinwüchsig, humorvoll, Streber, gesellig.", style: "Offen, respektvoll, umsichtig.", softspot: "Intellektuelle Witze, Gemeinschaft.", funfact: "Hat mal einen Mathe-Wettbewerb auf Landesebene gewonnen." },
+      "Zofia": { bio: "Spanischprofil, 15, ambivertiert. Streberhaft, beliebt.", style: "Nett, offen.", softspot: "Spanische Tapas, Komplimente.", funfact: "Hat Angst vor Clowns." },
+      "Ellison": { bio: "USA, 16. Politik. Kann fies und fake sein. Diskutiert gerne.", style: "Fake, fies, schwer zu knacken.", softspot: "Macht, politische Debatten.", funfact: "Will mal Präsidentin werden." },
+      "Tim": { bio: "Hypersozialer Italiener/Schweizer. Kocht gut (Macken: keine Eier/falsche Spaghetti). Lästert gerne.", style: "Starke Meinung, lästert, sozial.", softspot: "Echtes Carbonara, soziale Events.", funfact: "Hat Angst vor Ananas auf Pizza." }
   };
 
   const EGGS = {
@@ -69,6 +69,10 @@ export default async function handler(req, res) {
 
       const bio = KLASSE_SECRETS[payload.botName]?.bio || "";
       const style = KLASSE_SECRETS[payload.botName]?.style || "";
+      const softspot = KLASSE_SECRETS[payload.botName]?.softspot || "";
+      const funfact = KLASSE_SECRETS[payload.botName]?.funfact || "";
+      const mood = payload.currentMood || "neutral";
+      const gossip = (payload.globalGossip && payload.globalGossip.length > 0) ? `\nAktueller Klassen-Gossip (Nutze dieses Wissen clever): ${payload.globalGossip.join('. ')}.` : '';
       const learned = (payload.learnedTraits && payload.learnedTraits.length > 0) ? `\nFakten über dich/deine Vergangenheit: ${payload.learnedTraits.join('. ')}.` : '';
       const userTraits = (payload.currentUserTraits && payload.currentUserTraits.length > 0) ? `\nWas du über ${payload.currentUser} weißt: ${payload.currentUserTraits.join('. ')}.` : '';
 
@@ -76,12 +80,17 @@ export default async function handler(req, res) {
 Deine Biografie: ${bio}
 Dein Schreibstil: ${style}
 Deine Beziehung zu ${payload.currentUser}: ${payload.rel}% (0-20: Feinde, 21-40: Unsympathisch, 41-60: Bekannte, 61-80: Freunde, 81-100: Besties/Enge Freunde).
-${learned}${userTraits}
+Deine aktuelle Stimmung: ${mood} (Beeinflusse deine Antwort entsprechend!)
+Dein Softspot (nur erwähnen bei hoher Beziehung): ${softspot}
+Ein Funfact über dich (gelegentlich einstreuen): ${funfact}
+${learned}${userTraits}${gossip}
 
 WICHTIG FÜR CHARAKTERENTWICKLUNG:
-1. Deine Antworten müssen deine Beziehung widerspiegeln. Wenn ihr Feinde seid, sei passiv-aggressiv oder abweisend. Wenn ihr Freunde seid, sei offen und herzlich.
-2. Beziehe dich gelegentlich auf Dinge, die du über ${payload.currentUser} "weißst" (siehe oben).
-3. Wenn der User ein Bild schickt (Format: [IMAGE: URL]), reagiere spezifisch auf den Inhalt (simuliere, dass du es siehst).
+1. Deine Antworten müssen deine Beziehung und Stimmung widerspiegeln.
+2. Wenn du ${payload.currentUser} sehr magst, teile einen Funfact oder erwähne deinen Softspot.
+3. Wenn du einen geheimen Fakt/Gossip über jemanden anderen kennst, kannst du ihn andeuten.
+4. Du kannst ${payload.currentUser} vorschlagen, etwas an sich zu ändern (z.B. "Du solltest mutiger sein" oder "Lern mal besser für Mathe"), wenn es zum Charakter passt.
+5. Wenn der User ein Bild schickt (Format: [IMAGE: URL]), reagiere spezifisch auf den Inhalt.
 
 Nachricht von ${payload.currentUser}: "${payload.userText}".${promptMod}
 
@@ -89,10 +98,13 @@ Analysiere die Nachricht. Wenn ${payload.currentUser} etwas Neues über sich ver
 Antworte im JSON Schema: {"delta": number (-10 bis +10), "reply": "Deine Antwort als ${payload.botName}", "learnedFact": "string|null"}`;
 
   } else if (payload.type === "feed") {
-      fullPrompt = `SYSTEM-INFO: Du spielst die Schulklasse!
-Klassen-Post von ${payload.currentUser}: "${payload.userText}". Reputation von ihm: ${payload.rel}% (0-20: Feinde, 21-40: Unsympathisch, 41-60: Bekannte, 61-80: Freunde, 81-100: Besties/Enge Freunde).
-Erstelle realistische, kurzgefasste Klatsch-Kommentare (0 bis 4 Stück) von ANDEREN Mitschülern, abhängig davon wie sehr sie ihn mögen (Freunde: ${payload.friendsStr}).
-WICHTIG JSON Schema: {"repDelta": number, "likes": ["Name1", "Name2"], "comments": [{"user": "Name", "text": "Kommentar"}]}`;
+      const gossip = (payload.globalGossip && payload.globalGossip.length > 0) ? `\nAktueller Klassen-Gossip: ${payload.globalGossip.join('. ')}.` : '';
+      fullPrompt = `SYSTEM-INFO: Du spielst die Schulklasse! 
+Klassen-Aktivität von ${payload.currentUser}: "${payload.userText}". Reputation von ihm: ${payload.rel}% (0-20: Feinde, 21-40: Unsympathisch, 41-60: Bekannte, 61-80: Freunde, 81-100: Besties/Enge Freunde).
+${gossip}
+Wenn es eine Umfrage (Poll) ist, stimme für einige Mitschüler ab (JSON: 'votes').
+Erstelle realistische, kurzgefasste Kommentare (0 bis 4 Stück) von ANDEREN Mitschülern.
+WICHTIG JSON Schema: {"repDelta": number, "likes": ["Name1", "Name2"], "comments": [{"user": "Name", "text": "Kommentar"}], "votes": [number (Index des gewählten Poll-Options für 2-3 Mitschüler)]}`;
   } else {
       return res.status(400).json({ error: 'Invalid type payload' });
   }
