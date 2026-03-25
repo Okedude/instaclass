@@ -1111,29 +1111,46 @@
         }
     };
 
-    // AI STORY LOGIC
+    // AI STORY & NEWS LOGIC
     async function generateAIStory() {
         const botNames = Object.keys(KLASSE);
         const randomBot = botNames[Math.floor(Math.random() * botNames.length)];
         const payload = {
             type: "feed",
             currentUser: randomBot,
-            userText: "Poste eine kurze, lustige Story über deinen Tag oder jemanden in der Klasse.",
+            userText: "Erzähl kurz (1 Satz) etwas Lustiges oder Peinliches, was du heute erlebt hast.",
             rel: 50,
             globalGossip: globalState.globalGossip || []
         };
         const data = await fetchGemini(payload);
         if (data && data.comments && data.comments.length > 0) {
-            const story = { 
-                user: randomBot, 
-                text: data.comments[0].text, 
-                image: `https://picsum.photos/seed/${Math.random()}/400/600` 
-            };
-            autoPostNews(`${randomBot} hat eine neue Story gepostet: "${story.text}"`);
+            autoPostNews(`${randomBot} hat eine Story gepostet: "${data.comments[0].text}"`);
         }
     }
+
+    async function generateGossipNews() {
+        if (!globalState.globalGossip || globalState.globalGossip.length < 2) return;
+        const randomBot = "System-KI";
+        const payload = {
+            type: "chat",
+            botName: "InstaClass-Reporter",
+            currentUser: "System",
+            userText: "Fasse den aktuellen Klassen-Gossip in einem kurzen, reißerischen 'Klassen-News' Satz zusammen. Benutze Emojis!",
+            rel: 100,
+            globalGossip: globalState.globalGossip.slice(-5) 
+        };
+        const data = await fetchGemini(payload);
+        if (data && data.reply) {
+            autoPostNews(data.reply);
+        }
+    }
+
     // Run periodically
-    setInterval(() => { if (Math.random() < 0.1) generateAIStory(); }, 60000);
+    setInterval(() => { 
+        const r = Math.random();
+        if (r < 0.05) generateAIStory();
+        else if (r < 0.10) generateGossipNews();
+    }, 60000);
 
     window.onload = initLogin;
 </script>
