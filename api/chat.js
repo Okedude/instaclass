@@ -69,18 +69,28 @@ export default async function handler(req, res) {
 
       const bio = KLASSE_SECRETS[payload.botName]?.bio || "";
       const style = KLASSE_SECRETS[payload.botName]?.style || "";
-      const learned = (payload.learnedTraits && payload.learnedTraits.length > 0) ? `\nBeachte ab jetzt auch zwingend DIESE EIGENSCHAFTEN von dir (die du gelernt hast): ${payload.learnedTraits.join('. ')}.` : '';
+      const learned = (payload.learnedTraits && payload.learnedTraits.length > 0) ? `\nFakten über dich/deine Vergangenheit: ${payload.learnedTraits.join('. ')}.` : '';
+      const userTraits = (payload.currentUserTraits && payload.currentUserTraits.length > 0) ? `\nWas du über ${payload.currentUser} weißt: ${payload.currentUserTraits.join('. ')}.` : '';
 
-      fullPrompt = `SYSTEM-INFO: Du bist ${payload.botName} in einem Schulklassen-Rollenspiel. Deine Biografie: ${bio}. Dein Schreibstil: ${style}. ${learned}
-      
-Nachrichtung von ${payload.currentUser}: "${payload.userText}".${promptMod} Deine Beziehung zu ihm/ihr: ${payload.rel}%.
+      fullPrompt = `SYSTEM-INFO: Du bist ${payload.botName} in einem Schulklassen-Rollenspiel. 
+Deine Biografie: ${bio}
+Dein Schreibstil: ${style}
+Deine Beziehung zu ${payload.currentUser}: ${payload.rel}% (0-20: Feinde, 21-40: Unsympathisch, 41-60: Bekannte, 61-80: Freunde, 81-100: Besties/Enge Freunde).
+${learned}${userTraits}
 
-WICHTIG: Analysiere auch die Nachricht von ${payload.currentUser}. Wenn die Person darin etwas über ihre EIGENEN Interessen oder ihren sehr spezifischen Schreibstil verrät, extrahiere EINEN ganz kurzen, knackigen Fakt (aus Beobachterperspektive) in das Feld 'learnedFact'. Wenn es nichts Relevantes gibt, setze den Wert auf null.
-Antworte im JSON Schema: {"delta": number (Reaktionswert der Verändert -10 bis +10), "reply": "text", "learnedFact": "string|null"}`;
+WICHTIG FÜR CHARAKTERENTWICKLUNG:
+1. Deine Antworten müssen deine Beziehung widerspiegeln. Wenn ihr Feinde seid, sei passiv-aggressiv oder abweisend. Wenn ihr Freunde seid, sei offen und herzlich.
+2. Beziehe dich gelegentlich auf Dinge, die du über ${payload.currentUser} "weißst" (siehe oben).
+3. Wenn der User ein Bild schickt (Format: [IMAGE: URL]), reagiere spezifisch auf den Inhalt (simuliere, dass du es siehst).
+
+Nachricht von ${payload.currentUser}: "${payload.userText}".${promptMod}
+
+Analysiere die Nachricht. Wenn ${payload.currentUser} etwas Neues über sich verrät, extrahiere EINEN kurzen Fakt für 'learnedFact'.
+Antworte im JSON Schema: {"delta": number (-10 bis +10), "reply": "Deine Antwort als ${payload.botName}", "learnedFact": "string|null"}`;
 
   } else if (payload.type === "feed") {
       fullPrompt = `SYSTEM-INFO: Du spielst die Schulklasse!
-Klassen-Post von ${payload.currentUser}: "${payload.userText}". Reputation von ihm: ${payload.rel}%.
+Klassen-Post von ${payload.currentUser}: "${payload.userText}". Reputation von ihm: ${payload.rel}% (0-20: Feinde, 21-40: Unsympathisch, 41-60: Bekannte, 61-80: Freunde, 81-100: Besties/Enge Freunde).
 Erstelle realistische, kurzgefasste Klatsch-Kommentare (0 bis 4 Stück) von ANDEREN Mitschülern, abhängig davon wie sehr sie ihn mögen (Freunde: ${payload.friendsStr}).
 WICHTIG JSON Schema: {"repDelta": number, "likes": ["Name1", "Name2"], "comments": [{"user": "Name", "text": "Kommentar"}]}`;
   } else {
