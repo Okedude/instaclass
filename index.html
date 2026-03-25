@@ -123,9 +123,6 @@
 </div>
 
 <script>
-    // API KEY FOR GITHUB PAGES
-    const apiKey = "AIzaSyAKm_f7iwE5mNefKdYiNcgPKSws5jGmezE"; 
-    const MODEL_ID = "gemini-flash-latest";
     const DB_SEED_URL = "https://api.dicebear.com/7.x/avataaars/svg?seed=";
     const KLASSE = {
         "Adriana S.": { seed: "Adriana", bio: "Arrogant, Moncler-Brille. Liebt Partys & Parallelklasse.", style: "Snobby, herablassend.", friends: ["Nila", "Eileen", "Helena", "Cedric", "Max", "Leif"], hates: ["William", "Tim", "Elisa", "Anna G.", "Anna P."] },
@@ -241,35 +238,18 @@
     }
 
     async function fetchGemini(userQuery) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${apiKey}`;
         const delays = [1000, 2000, 4000];
         
-        const systemPrompt = "Du bist ein KI-Modell für ein Rollenspiel einer Schulklasse in Zürich. Deine Antworten müssen IMMER im JSON-Format sein.";
-
         for (let i = 0; i <= delays.length; i++) {
             try {
-                const response = await fetch(url, {
+                const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ 
-                            role: "user",
-                            parts: [{ text: userQuery }] 
-                        }],
-                        systemInstruction: { 
-                            parts: [{ text: systemPrompt }] 
-                        },
-                        generationConfig: { 
-                            responseMimeType: "application/json"
-                        }
-                    })
+                    body: JSON.stringify({ prompt: userQuery })
                 });
                 
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                
-                const data = await response.json();
-                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-                return JSON.parse(text);
+                return await response.json();
             } catch (err) {
                 if (i === delays.length) return null;
                 await new Promise(r => setTimeout(r, delays[i]));
