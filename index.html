@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InstaClass Version 2</title>
+    <title>InstaClass - Gossip & Image</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
@@ -386,7 +386,9 @@
         const key = getChatKey(currentUser, activeChat);
         const history = globalState.history[key] || [];
         
-        const container = document.getElementById('chat-messages');
+        const container = document.getElementById('chat-msgs');
+        if (!container) return;
+
         container.innerHTML = history.map(msg => {
             const isMe = msg.from === currentUser;
             
