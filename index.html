@@ -713,6 +713,11 @@
             }
             
             const likesCount = p.likes?.length || 0;
+            const commentsHtml = (p.comments || []).map(c => `
+                <div class="text-xs mt-1 bg-gray-50 dark:bg-zinc-800/50 p-2 rounded-lg ml-8 relative border-l-2 border-blue-400 dark:text-zinc-300">
+                    <span class="font-bold text-blue-500">${c.user}:</span> ${c.text}
+                </div>
+            `).join('');
             const isPoll = p.type === 'poll';
             
             let pollHtml = "";
