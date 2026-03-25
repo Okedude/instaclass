@@ -1,0 +1,22 @@
+{
+  "contents": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "Antworte als Adriana S. auf Tim: 'Hallo'. Beziehung: 50%. JSON Schema: {\"reply\": \"text\", \"relChange\": 0, \"repChange\": 0}"
+        }
+      ]
+    }
+  ],
+  "systemInstruction": {
+    "parts": [
+      {
+        "text": "Du bist ein KI-Modell für ein Rollenspiel einer Schulklasse."
+      }
+    ]
+  },
+  "generationConfig": {
+    "responseMimeType": "application/json"
+  }
+}
