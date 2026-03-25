@@ -241,6 +241,7 @@
     if (!globalState.learnedTraits) globalState.learnedTraits = {};
     if (!globalState.reputation) globalState.reputation = {};
     if (!globalState.relationships) globalState.relationships = {};
+    globalState.feed = globalState.feed.filter(p => p.type !== 'news');
 
     let currentUser = null;
     let activeChat = null;
@@ -392,15 +393,7 @@
     }
 
     function autoPostNews(text) {
-        // Limit news items to max 3 total in the feed
-        const newsItems = globalState.feed.filter(p => p.type === 'news');
-        if (newsItems.length >= 3) {
-            const firstNewsIndex = globalState.feed.findIndex(p => p.type === 'news');
-            if (firstNewsIndex !== -1) globalState.feed.splice(firstNewsIndex, 1);
-        }
-        const post = { type: 'news', user: 'System', text, likes: [], comments: [] };
-        globalState.feed.push(post);
-        save(); renderFeed();
+        // Feature removed as per user request
     }
 
     function getRelLevelInfo(val) {
@@ -723,14 +716,6 @@
     function renderFeed() {
         document.getElementById('feed-container').innerHTML = globalState.feed.slice().reverse().map((p, index) => {
             const originalIndex = globalState.feed.length - 1 - index;
-            if (p.type === 'news') {
-                return `
-                <div class="p-4 bg-zinc-50 dark:bg-zinc-900/50 border-b dark:border-zinc-800 text-center animate-fade-in">
-                    <p class="text-[10px] font-black text-brand uppercase tracking-widest mb-1">Klassen-News</p>
-                    <p class="text-sm font-bold dark:text-zinc-200">${p.text}</p>
-                </div>`;
-            }
-            
             const likesCount = p.likes?.length || 0;
             const commentsHtml = (p.comments || []).map(c => `
                 <div class="text-xs mt-1 bg-gray-50 dark:bg-zinc-800/50 p-2 rounded-lg ml-8 relative border-l-2 border-blue-400 dark:text-zinc-300">
@@ -1111,7 +1096,7 @@
         }
     };
 
-    // AI STORY & NEWS LOGIC
+    // AI STORY LOGIC
     async function generateAIStory() {
         const botNames = Object.keys(KLASSE);
         const randomBot = botNames[Math.floor(Math.random() * botNames.length)];
@@ -1124,32 +1109,13 @@
         };
         const data = await fetchGemini(payload);
         if (data && data.comments && data.comments.length > 0) {
-            autoPostNews(`${randomBot} hat eine Story gepostet: "${data.comments[0].text}"`);
-        }
-    }
-
-    async function generateGossipNews() {
-        if (!globalState.globalGossip || globalState.globalGossip.length < 2) return;
-        const randomBot = "System-KI";
-        const payload = {
-            type: "chat",
-            botName: "InstaClass-Reporter",
-            currentUser: "System",
-            userText: "Fasse den aktuellen Klassen-Gossip in einem kurzen, reißerischen 'Klassen-News' Satz zusammen. Benutze Emojis!",
-            rel: 100,
-            globalGossip: globalState.globalGossip.slice(-5) 
-        };
-        const data = await fetchGemini(payload);
-        if (data && data.reply) {
-            autoPostNews(data.reply);
+            // News removed, stories could be converted to posts later
         }
     }
 
     // Run periodically
     setInterval(() => { 
-        const r = Math.random();
-        if (r < 0.05) generateAIStory();
-        else if (r < 0.10) generateGossipNews();
+        if (Math.random() < 0.05) generateAIStory();
     }, 60000);
 
     window.onload = initLogin;
