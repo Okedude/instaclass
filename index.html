@@ -231,8 +231,16 @@
         onlineStatus: {},
         globalGossip: [],
         moods: {},
-        groups: []
+        groups: [],
+        learnedTraits: {}
     };
+    // Migration: ensure new keys exist
+    if (!globalState.globalGossip) globalState.globalGossip = [];
+    if (!globalState.moods) globalState.moods = {};
+    if (!globalState.groups) globalState.groups = [];
+    if (!globalState.learnedTraits) globalState.learnedTraits = {};
+    if (!globalState.reputation) globalState.reputation = {};
+    if (!globalState.relationships) globalState.relationships = {};
 
     let currentUser = null;
     let activeChat = null;
