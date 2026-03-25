@@ -482,6 +482,11 @@
         document.getElementById('chat-view').classList.remove('hidden');
         document.getElementById('chat-header-name').innerText = name;
         document.getElementById('chat-header-img').src = DB_SEED_URL + KLASSE[name].seed;
+        document.getElementById('chat-header-online').className = "online-indicator " + (globalState.onlineStatus[name] === 'online' ? 'is-online' : 'is-offline');
+        
+        const relBar = document.getElementById('chat-rel-bar');
+        if (relBar && relBar.parentElement) relBar.parentElement.style.opacity = "1";
+        
         updateChatHeaderRel(); renderMessages();
     }
 
@@ -1012,9 +1017,13 @@
         activeChat = null;
         const group = globalState.groups.find(g => g.id === groupId);
         document.getElementById('chat-view').classList.remove('hidden');
-        document.getElementById('chat-name').innerText = group.name;
-        document.getElementById('chat-avatar').src = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + group.id;
-        document.getElementById('chat-status').innerText = group.members.join(', ');
+        document.getElementById('chat-header-name').innerText = group.name;
+        document.getElementById('chat-header-img').src = "https://api.dicebear.com/7.x/avataaars/svg?seed=" + group.id;
+        document.getElementById('chat-rel-val').innerText = group.members.join(', ');
+        document.getElementById('chat-header-online').className = "online-indicator is-online";
+        // Hide rel bar for groups
+        const relBar = document.getElementById('chat-rel-bar');
+        if (relBar && relBar.parentElement) relBar.parentElement.style.opacity = "0";
         renderMessages();
     }
 
@@ -1051,7 +1060,8 @@
     renderMessages = function() {
         if (activeGroupId) {
             const group = globalState.groups.find(g => g.id === activeGroupId);
-            const container = document.getElementById('chat-messages');
+            const container = document.getElementById('chat-msgs');
+            if (!container) return;
             container.innerHTML = group.history.map(msg => {
                 const isMe = msg.from === currentUser;
                 return `
