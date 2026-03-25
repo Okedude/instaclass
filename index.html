@@ -114,7 +114,7 @@
     </div>
 
     <!-- CHAT VIEW -->
-    <div id="chat-view" class="hidden fixed inset-0 z-[200] bg-white dark:bg-black flex flex-col max-w-md mx-auto border-x dark:border-zinc-800">
+    <div id="chat-view" class="hidden fixed inset-0 z-[500] bg-white dark:bg-black flex flex-col max-w-md mx-auto border-x dark:border-zinc-800">
         <header class="px-4 py-3 border-b dark:border-zinc-800 flex items-center justify-between z-10 glass">
             <div class="flex items-center gap-3 overflow-hidden flex-1">
                 <button onclick="closeChat()"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
@@ -392,6 +392,12 @@
     }
 
     function autoPostNews(text) {
+        // Limit news items to max 3 total in the feed
+        const newsItems = globalState.feed.filter(p => p.type === 'news');
+        if (newsItems.length >= 3) {
+            const firstNewsIndex = globalState.feed.findIndex(p => p.type === 'news');
+            if (firstNewsIndex !== -1) globalState.feed.splice(firstNewsIndex, 1);
+        }
         const post = { type: 'news', user: 'System', text, likes: [], comments: [] };
         globalState.feed.push(post);
         save(); renderFeed();
