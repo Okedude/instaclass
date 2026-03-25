@@ -143,11 +143,27 @@
     <div id="post-modal" class="hidden fixed inset-0 z-[500] bg-black/60 backdrop-blur-sm flex items-end">
         <div class="w-full bg-white dark:bg-zinc-900 rounded-t-[24px] p-6 shadow-2xl animate-fade-in">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold dark:text-white">Neuer Post</h3>
+                <div class="flex gap-4">
+                    <button id="tab-gossip" onclick="switchPostTab('gossip')" class="font-bold border-b-2 border-brand text-brand">Gossip</button>
+                    <button id="tab-poll" onclick="switchPostTab('poll')" class="font-bold text-gray-400 dark:text-zinc-500">Umfrage</button>
+                </div>
                 <button onclick="closePostModal()" class="p-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
             </div>
-            <textarea id="post-input" placeholder="Teile Gossip oder ein Update..." class="w-full h-24 p-4 bg-gray-50 dark:bg-zinc-800 dark:text-white rounded-xl border dark:border-zinc-700 text-sm mb-4 outline-none focus:ring-1 focus:ring-brand"></textarea>
-            <button id="publish-btn" onclick="createNewPost()" class="w-full bg-[#0095f6] hover:bg-[#0077c2] text-white py-4 rounded-xl font-bold transition">Veröffentlichen</button>
+            
+            <div id="gossip-input-area">
+                <textarea id="post-input" placeholder="Teile Gossip oder ein Update..." class="w-full h-24 p-4 bg-gray-50 dark:bg-zinc-800 dark:text-white rounded-xl border dark:border-zinc-700 text-sm mb-4 outline-none focus:ring-1 focus:ring-brand"></textarea>
+            </div>
+            
+            <div id="poll-input-area" class="hidden space-y-3 mb-4">
+                <input type="text" id="poll-question" placeholder="Deine Frage (z.B. Wer ist am nettesten?)" class="w-full p-3 bg-gray-50 dark:bg-zinc-800 dark:text-white rounded-xl border dark:border-zinc-700 text-sm outline-none focus:ring-1 focus:ring-brand">
+                <div id="poll-options-container" class="space-y-2">
+                    <input type="text" placeholder="Option 1" class="poll-opt w-full p-2 bg-gray-50 dark:bg-zinc-800 dark:text-white rounded-lg border dark:border-zinc-700 text-xs outline-none">
+                    <input type="text" placeholder="Option 2" class="poll-opt w-full p-2 bg-gray-50 dark:bg-zinc-800 dark:text-white rounded-lg border dark:border-zinc-700 text-xs outline-none">
+                </div>
+                <button onclick="addPollOption()" class="text-[10px] font-bold text-brand">+ Option hinzufügen</button>
+            </div>
+
+            <button id="publish-btn" onclick="publishPost()" class="w-full bg-[#0095f6] hover:bg-[#0077c2] text-white py-4 rounded-xl font-bold transition">Veröffentlichen</button>
         </div>
     </div>
 </div>
@@ -186,7 +202,9 @@
         history: {},
         reputation: {}, 
         relationships: {}, 
-        onlineStatus: {}
+        onlineStatus: {},
+        globalGossip: [],
+        moods: {}
     };
 
     let currentUser = null;
@@ -498,7 +516,9 @@
             userText: imageUrl ? `[IMAGE: ${imageUrl}] ${customText}` : customText,
             rel: rel,
             learnedTraits: globalState.learnedTraits[botName] || [],
-            currentUserTraits: globalState.learnedTraits[currentUser] || []
+            currentUserTraits: globalState.learnedTraits[currentUser] || [],
+            globalGossip: globalState.globalGossip || [],
+            currentMood: getMood(botName)
         };
 
         const typingInd = document.getElementById('typing-indicator');
@@ -514,6 +534,9 @@
                 if (!globalState.learnedTraits[currentUser]) globalState.learnedTraits[currentUser] = [];
                 if (globalState.learnedTraits[currentUser].length >= 10) globalState.learnedTraits[currentUser].shift();
                 globalState.learnedTraits[currentUser].push(data.learnedFact);
+                
+                // 30% chance to turn a fact into global gossip
+                if (Math.random() < 0.3) addGossip(`${botName} hat erfahren: ${data.learnedFact}`);
             }
             globalState.history[key].push({ from: botName, text: data.reply });
             save(); renderMessages();
@@ -588,11 +611,13 @@
             // Save newly learned fact about the currentUser
             if (data.learnedFact) {
                 if (!globalState.learnedTraits[currentUser]) globalState.learnedTraits[currentUser] = [];
-                // Only save up to 10 latest facts
                 if (globalState.learnedTraits[currentUser].length >= 10) {
-                    globalState.learnedTraits[currentUser].shift(); // Remove oldest
+                    globalState.learnedTraits[currentUser].shift();
                 }
                 globalState.learnedTraits[currentUser].push(data.learnedFact);
+
+                // 30% chance to turn a fact into global gossip
+                if (Math.random() < 0.3) addGossip(`${botName} hat erfahren: ${data.learnedFact}`);
             }
 
             globalState.history[key].push({ from: botName, text: data.reply });
@@ -614,6 +639,26 @@
         document.getElementById('feed-container').innerHTML = globalState.feed.slice().reverse().map((p, index) => {
             const originalIndex = globalState.feed.length - 1 - index;
             const likesCount = p.likes?.length || 0;
+            const isPoll = p.type === 'poll';
+            
+            let pollHtml = "";
+            if (isPoll) {
+                const totalVotes = p.options.reduce((sum, o) => sum + o.votes.length, 0);
+                pollHtml = `<div class="mt-3 space-y-2">` + p.options.map((opt, optIdx) => {
+                    const pct = totalVotes > 0 ? Math.round((opt.votes.length / totalVotes) * 100) : 0;
+                    const hasVoted = opt.votes.includes(currentUser);
+                    return `
+                        <button onclick="votePoll(${originalIndex}, ${optIdx})" class="w-full text-left relative p-3 rounded-xl border dark:border-zinc-700 overflow-hidden group">
+                            <div class="absolute inset-0 bg-brand/10 transition-all duration-500" style="width: ${pct}%"></div>
+                            <div class="relative flex justify-between items-center text-xs">
+                                <span class="font-bold ${hasVoted ? 'text-brand' : 'dark:text-zinc-300'}">${opt.text}</span>
+                                <span class="font-black opacity-40">${pct}%</span>
+                            </div>
+                        </button>
+                    `;
+                }).join('') + `<p class="text-[10px] text-gray-400 font-bold mt-1 uppercase tracking-tighter">${totalVotes} Stimmen</p></div>`;
+            }
+
             const commentsHtml = (p.comments || []).map(c => `
                 <div class="text-xs mt-1 bg-gray-50 dark:bg-zinc-800/50 p-2 rounded-lg ml-8 relative border-l-2 border-blue-400 dark:text-zinc-300">
                     <span class="font-bold text-blue-500">${c.user}:</span> ${c.text}
@@ -624,10 +669,12 @@
             <div class="p-4 border-b dark:border-zinc-800 animate-fade-in" style="animation-delay: ${index * 0.05}s">
                 <div class="flex items-center gap-2 mb-2">
                     <img src="${DB_SEED_URL + KLASSE[p.user]?.seed}" class="w-6 h-6 rounded-full border dark:border-zinc-700 bg-white">
-                    <span class="font-bold text-xs dark:text-zinc-200">${p.user}</span>
+                    <span class="font-bold text-xs dark:text-zinc-200">${p.user} ${isPoll ? 'macht eine Umfrage:' : ''}</span>
                 </div>
                 <p class="text-sm font-medium dark:text-zinc-100">${p.text}</p>
                 
+                ${pollHtml}
+
                 <div class="flex items-center gap-4 mt-3 mb-2 text-gray-400 dark:text-zinc-500">
                     <button onclick="likePost(${originalIndex})" class="flex items-center gap-1.5 text-xs hover:text-red-500 transition-colors ${p.likes?.includes(currentUser) ? 'text-red-500' : ''}">
                         <svg width="18" height="18" fill="${p.likes?.includes(currentUser) ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
@@ -691,37 +738,121 @@
     function openPostModal() { document.getElementById('post-modal').classList.remove('hidden'); }
     function closePostModal() { document.getElementById('post-modal').classList.add('hidden'); }
 
+    let currentPostTab = 'gossip';
+    function switchPostTab(tab) {
+        currentPostTab = tab;
+        const isGossip = tab === 'gossip';
+        document.getElementById('gossip-input-area').classList.toggle('hidden', !isGossip);
+        document.getElementById('poll-input-area').classList.toggle('hidden', isGossip);
+        document.getElementById('tab-gossip').className = isGossip ? 'font-bold border-b-2 border-brand text-brand' : 'font-bold text-gray-400 dark:text-zinc-500';
+        document.getElementById('tab-poll').className = !isGossip ? 'font-bold border-b-2 border-brand text-brand' : 'font-bold text-gray-400 dark:text-zinc-500';
+    }
+
+    function addPollOption() {
+        const container = document.getElementById('poll-options-container');
+        if (container.children.length >= 5) return;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = `Option ${container.children.length + 1}`;
+        input.className = 'poll-opt w-full p-2 bg-gray-50 dark:bg-zinc-800 dark:text-white rounded-lg border dark:border-zinc-700 text-xs outline-none';
+        container.appendChild(input);
+    }
+
+    function publishPost() {
+        if (currentPostTab === 'gossip') createNewPost();
+        else createPoll();
+    }
+
+    function createPoll() {
+        const question = document.getElementById('poll-question').value.trim();
+        const optionNodes = document.querySelectorAll('.poll-opt');
+        const options = Array.from(optionNodes).map(n => n.value.trim()).filter(v => v !== "");
+        
+        if (!question || options.length < 2) return alert("Frage und mindestens 2 Optionen nötig!");
+        
+        const newPost = { 
+            type: 'poll', 
+            user: currentUser, 
+            text: question, 
+            options: options.map(o => ({ text: o, votes: [] })),
+            likes: [], 
+            comments: [] 
+        };
+        
+        globalState.feed.push(newPost);
+        const postIndex = globalState.feed.length - 1;
+        save(); renderFeed(); closePostModal();
+        triggerAIForFeed(newPost, postIndex);
+    }
+
     async function createNewPost() {
         const text = document.getElementById('post-input').value.trim();
         if (!text) return;
         
-        const newPost = { user: currentUser, text, likes: [], comments: [] };
+        const newPost = { type: 'gossip', user: currentUser, text, likes: [], comments: [] };
         globalState.feed.push(newPost);
         const postIndex = globalState.feed.length - 1;
         save(); renderFeed(); closePostModal();
-        
+        triggerAIForFeed(newPost, postIndex);
+    }
+
+    async function triggerAIForFeed(post, index) {
         const friendsStr = KLASSE[currentUser]?.friends?.join(', ') || '';
         const payload = {
             type: "feed",
             currentUser: currentUser,
-            userText: text,
+            userText: post.text,
             rel: getRep(currentUser),
-            friendsStr: friendsStr
+            friendsStr: friendsStr,
+            globalGossip: globalState.globalGossip || []
         };
         
         const data = await fetchGemini(payload);
         if (data) {
             setRep(currentUser, data.repDelta || 0);
-            if (data.likes && Array.isArray(data.likes)) {
-                globalState.feed[postIndex].likes = data.likes;
-            }
-            if (data.comments && Array.isArray(data.comments)) {
-                globalState.feed[postIndex].comments = data.comments;
+            if (data.likes) globalState.feed[index].likes = data.likes;
+            if (data.comments) globalState.feed[index].comments = data.comments;
+            if (data.votes && post.type === 'poll') {
+                data.votes.forEach((optIdx, i) => {
+                    const voter = KLASSE[Object.keys(KLASSE)[i % Object.keys(KLASSE).length]]; // Mock multiple voters
+                    if (globalState.feed[index].options[optIdx]) {
+                        globalState.feed[index].options[optIdx].votes.push("AI_User"); // Simplified
+                    }
+                });
             }
             save(); renderFeed();
         }
     }
 
+    function votePoll(postIndex, optIndex) {
+        const post = globalState.feed[postIndex];
+        if (!post || post.type !== 'poll') return;
+        
+        // Remove old vote if any
+        post.options.forEach(opt => {
+            opt.votes = opt.votes.filter(u => u !== currentUser);
+        });
+        
+        post.options[optIndex].votes.push(currentUser);
+        save(); renderFeed();
+    }
+
+    function getMood(name) {
+        if (!globalState.moods[name]) {
+            const moods = ["gut gelaunt", "neutral", "genervt", "traurig", "überdreht", "müde"];
+            globalState.moods[name] = moods[Math.floor(Math.random() * moods.length)];
+        }
+        return globalState.moods[name];
+    }
+
+    function addGossip(fact) {
+        if (!globalState.globalGossip) globalState.globalGossip = [];
+        if (globalState.globalGossip.length > 20) globalState.globalGossip.shift();
+        globalState.globalGossip.push(fact);
+        save();
+    }
+
     window.onload = initLogin;
 </script>
 </body>
+</html>
