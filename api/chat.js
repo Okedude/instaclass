@@ -95,7 +95,7 @@ WICHTIG FÜR CHARAKTERENTWICKLUNG:
 Nachricht von ${payload.currentUser}: "${payload.userText}".${promptMod}
 
 Analysiere die Nachricht. Wenn ${payload.currentUser} etwas Neues über sich verrät, extrahiere EINEN kurzen Fakt für 'learnedFact'.
-Antworte im JSON Schema: {"delta": number (-10 bis +10), "reply": "Deine Antwort als ${payload.botName}", "learnedFact": "string|null"}`;
+Antworte im JSON Schema: {"delta": number (-10 bis +10), "reply": "Deine Antwort als ${payload.botName}", "learnedFact": "string|null", "dare": {"task": "string", "reward": number}|null}`;
 
   } else if (payload.type === "feed") {
       const gossip = (payload.globalGossip && payload.globalGossip.length > 0) ? `\nAktueller Klassen-Gossip: ${payload.globalGossip.join('. ')}.` : '';
