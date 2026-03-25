@@ -497,7 +497,8 @@
             currentUser: currentUser,
             userText: imageUrl ? `[IMAGE: ${imageUrl}] ${customText}` : customText,
             rel: rel,
-            learnedTraits: globalState.learnedTraits[botName] || []
+            learnedTraits: globalState.learnedTraits[botName] || [],
+            currentUserTraits: globalState.learnedTraits[currentUser] || []
         };
 
         const typingInd = document.getElementById('typing-indicator');
@@ -568,7 +569,7 @@
             type: "chat",
             botName: botName,
             currentUser: currentUser,
-            userText: imageUrl ? `[IMAGE: ${imageUrl}] ${customText}` : customText,
+            userText: userText,
             rel: rel,
             learnedTraits: globalState.learnedTraits[botName] || [],
             currentUserTraits: globalState.learnedTraits[currentUser] || []
@@ -724,4 +725,3 @@
     window.onload = initLogin;
 </script>
 </body>
-</html>
